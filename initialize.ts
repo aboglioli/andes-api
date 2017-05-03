@@ -2,11 +2,12 @@ import * as bodyParser from 'body-parser';
 import * as mongoose from 'mongoose';
 import * as config from './config';
 import { Auth } from './auth/auth.class';
-import { Swagger } from './swagger';
 import * as HttpStatus from 'http-status-codes';
 import { schemaDefaults } from './mongoose/defaults';
 import { Express } from 'express';
+import * as express from 'express';
 let requireDir = require('require-dir');
+let path = require('path');
 
 export function initAPI(app: Express) {
     // Configuración de Mongoose
@@ -24,9 +25,6 @@ export function initAPI(app: Express) {
 
     // Inicializa la autenticación con Password/JWT
     Auth.initialize(app);
-
-    // Inicializa swagger
-    Swagger.initialize(app);
 
     // Configura Express
     app.use(bodyParser.json());
@@ -87,4 +85,13 @@ export function initAPI(app: Express) {
             });
         }
     });
+
+    // URL imgs Matriculaciones
+    // Fotos
+    let dirFotos = path.join(__dirname, '/modules/matriculaciones/uploads/fotos');
+    app.use(express.static(dirFotos));
+
+    // Firmas
+    let dirFirmas = path.join(__dirname, '/modules/matriculaciones/uploads/firmas');
+    app.use(express.static(dirFirmas));
 }

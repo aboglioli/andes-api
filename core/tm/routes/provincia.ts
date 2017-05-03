@@ -1,9 +1,11 @@
 import * as mongoose from 'mongoose';
 import * as express from 'express'
 import * as provincia from '../schemas/provincia_model'
+import * as pais from '../schemas/pais_model'
+import * as localidad from '../schemas/localidad'
 import * as utils from '../../../utils/utils';
 
-var router = express.Router();
+let router = express.Router();
 /**
  * @swagger
  * definition:
@@ -15,12 +17,12 @@ var router = express.Router();
  *          type: string
  *      pais:
  *          type: object
- *          properties: 
- *              id: 
+ *          properties:
+ *              id:
  *                  type: string
  *              nombre:
  *                  type: string
- * 
+ *
  */
 
 /**
@@ -69,6 +71,7 @@ var router = express.Router();
  *         schema:
  *           $ref: '#/definitions/provincia'
  */
+
 router.get('/provincias/:id*?', function (req, res, next) {
 
     if (req.params.id) {
@@ -81,11 +84,13 @@ router.get('/provincias/:id*?', function (req, res, next) {
         });
     } else {
         let query;
+
         query = provincia.find({});
 
         if (req.query.nombre) {
             query.where('nombre').equals(RegExp('^.*' + req.query.nombre + '.*$', 'i'));
         }
+
         if (req.query.pais) {
             query.where('pais._id').equals(req.query.pais);
         }

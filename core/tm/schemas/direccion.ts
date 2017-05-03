@@ -1,7 +1,13 @@
 import * as mongoose from 'mongoose';
 import * as ubicacionSchema from './ubicacion';
 
+
 let schema = new mongoose.Schema({
+    tipo: {
+        type: String,
+        enum: ['Real', 'Legal', 'Profesional'],
+        required: true
+    },
     valor: String,
     codigoPostal: String,
     ubicacion: ubicacionSchema,

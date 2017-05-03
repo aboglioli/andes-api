@@ -3,8 +3,122 @@ import * as express from 'express'
 import { profesional } from '../schemas/profesional'
 import * as utils from '../../../utils/utils'
 import * as config from '../../../config';
+import * as multer from 'multer';
+import * as fs from 'fs';
 
-var router = express.Router();
+let router = express.Router();
+
+/**
+ * Multer (File Upload)
+ */
+let storageFotos = multer.diskStorage({
+    destination: function(req, file, cb) {
+        cb(null, './modules/matriculaciones/uploads/fotos');
+    },
+    filename: function(req, file, cb) {
+        cb(null, 'prof-' + req.params.profId + '.' + file.originalname.split('.')[file.originalname.split('.').length - 1]);
+    }
+});
+
+let uploadFoto = multer({
+    storage: storageFotos
+}).single('file');
+
+let storageFirmas = multer.diskStorage({
+    destination: function(req, file, cb) {
+        cb(null, './modules/matriculaciones/uploads/firmas');
+    },
+    filename: function(req, file, cb) {
+        cb(null, 'firma-' + req.params.profId + '-' + Date.now().toString() + '.' + file.originalname.split('.')[file.originalname.split('.').length - 1]);
+    }
+});
+
+let uploadFirma = multer({
+    storage: storageFirmas
+}).single('file');
+
+/**
+ * Upload Firmas
+ */
+router.post('/profesionales/firma/:profId', uploadFirma,  (req, resp, errHandler) => {
+
+    let filename = req.file.filename;
+    let timestamp = parseInt(filename.split('-')[2].substr(0, filename.split('-')[2].indexOf('.')), 0);
+
+    let oFirma = {
+        imgArchivo: filename,
+        fecha: new Date(timestamp)
+    };
+    resp.json(oFirma);
+
+});
+
+/**
+ * Upload Fotos
+ */
+router.post('/profesionales/foto/:profId', uploadFoto,  (req, resp) => {
+
+    resp.json({ fileName: req.file.filename});
+
+});
+
+/**
+ * Get Base64 imgs
+ */
+router.get('/profesionales/matricula/:profId', (req, resp, errHandler) => {
+
+    let oCredencial = {
+        foto: null,
+        firmaProfesional: null,
+        firmaSupervisor: null
+    };
+
+
+    profesional.findById(req.params.profId).exec((err, prof) => {
+        if (err) {
+            return errHandler(err);
+        }
+        console.log(prof)
+        let pathFirmaSupervisor = './modules/matriculaciones/uploads/firmas/firma-supervisor.jpg';
+        let pathFirmaProfesional = './modules/matriculaciones/uploads/firmas/' + prof.ultimaFirma.imgArchivo;
+        let pathFoto = './modules/matriculaciones/uploads/fotos/prof-' + req.params.profId + '.jpg';
+
+        fs.readFile(pathFoto, (errReadFoto, fotoB64) => {
+            if (errReadFoto) {
+                return errHandler(errReadFoto);
+            }
+
+            oCredencial.foto = 'data:image/jpeg;base64,' + new Buffer(fotoB64).toString('base64');
+
+            fs.readFile(pathFirmaProfesional, (errReadFirma, firmaProfB64) => {
+                if (errReadFirma) {
+                    return errHandler(errReadFirma);
+                }
+
+                oCredencial.firmaProfesional = 'data:image/jpeg;base64,' + new Buffer(firmaProfB64).toString('base64');
+
+                fs.readFile(pathFirmaSupervisor, (errReadFirmaSup, firmaSupB64) => {
+                    if (errReadFirmaSup) {
+                        return errHandler(errReadFirmaSup);
+                    }
+
+                    oCredencial.firmaSupervisor = 'data:image/jpeg;base64,' + new Buffer(firmaSupB64).toString('base64');
+                    resp.json(oCredencial);
+                });
+            });
+        });
+
+    });
+
+
+
+});
+
+
+
+
+
+
 
 /**
  * @swagger
@@ -23,7 +137,7 @@ var router = express.Router();
  *         type: array
  *         items:
  *          type: object
- *          properties: 
+ *          properties:
  *               tipo:
  *                  type: string
  *                  enum: [
@@ -33,9 +147,9 @@ var router = express.Router();
  *                  ]
  *               valor:
  *                  type: string
- *               ranking: 
+ *               ranking:
  *                  type: number
- *               ultimaActualizacion: 
+ *               ultimaActualizacion:
  *                  type: string
  *                  format: date
  *               activo:
@@ -45,14 +159,14 @@ var router = express.Router();
  *         enum: [
  *              femenino,
  *              masculino,
- *              otro 
+ *              otro
  *         ]
  *       genero:
  *         type: string
  *         enum: [
  *           femenino,
  *           masculino,
- *           otro 
+ *           otro
  *         ]
  *       fechaNacimiento:
  *         type: string
@@ -87,7 +201,7 @@ var router = express.Router();
  *                type: string
  *       matriculas:
  *          type: array
- *          items: 
+ *          items:
  *              type: object
  *              properties:
  *                  numero:
@@ -183,74 +297,14 @@ var router = express.Router();
  *           $ref: '#/definitions/profesional'
  */
 router.get('/profesionales/:id*?', function (req, res, next) {
-    if (req.params.id) {
-        profesional.findById(req.params._id, function (err, data) {
-            if (err) {
-                next(err);
-            };
-            res.json(data);
-        });
-    } else {
-        var query;
-        var opciones = {};
 
-        if (req.query.nombre) {
-            opciones['nombre'] = {
-                '$regex': utils.makePattern(req.query.nombre)
-            };
-        }
-
-        if (req.query.apellido) {
-            opciones['apellido'] = {
-                '$regex': utils.makePattern(req.query.apellido)
-            };
-        }
-
-        if (req.query.nombreCompleto) {
-            opciones['nombre'] = {
-                '$regex': utils.makePattern(req.query.nombreCompleto)
-            };
-            opciones['apellido'] = {
-                '$regex': utils.makePattern(req.query.nombreCompleto)
-            };
-        }
-
-        if (req.query.documento) {
-            opciones['documento'] = utils.makePattern(req.query.documento);
-        }
-
-        if (req.query.fechaNacimiento) {
-            opciones['fechaNacimiento'] = req.query.fechaNacimiento;
-        }
-
-        if (req.query.numeroMatricula) {
-            opciones['matriculas.numero'] = req.query.numeroMatricula;
-        }
-
-        if (req.query.especialidad) {
-            opciones['especialidad.nombre'] = {
-                '$regex': utils.makePattern(req.query.especialidad)
-            };
-        }
-    }
-
-    let skip: number = parseInt(req.query.skip || 0);
-    let limit: number = Math.min(parseInt(req.query.limit || defaultLimit), maxLimit);
-
-    if (req.query.nombreCompleto) {
-        query = profesional.find({ apellido: { '$regex': utils.makePattern(req.query.nombreCompleto) } }).
-            sort({ apellido: 1, nombre: 1 });
-    } else {
-        query = profesional.find(opciones).skip(skip).limit(limit);
-    }
-
-    query.exec(function (err, data) {
+    profesional.findById( req.params.id, function (err, data) {
         if (err) {
-            return next(err);
-        }
+            next(err);
+        };
+
         res.json(data);
     });
-
 });
 
 /**
@@ -279,13 +333,31 @@ router.get('/profesionales/:id*?', function (req, res, next) {
  *           $ref: '#/definitions/profesional'
  */
 router.post('/profesionales', function (req, res, next) {
-    let newProfesional = new profesional(req.body);
-    newProfesional.save((err) => {
-        if (err) {
-            next(err);
-        }
-        res.json(newProfesional);
-    });
+
+    if (req.body.id) {
+
+        profesional.findByIdAndUpdate(req.body.id, req.body, { new: true }, (err, ret) => {
+            if (err) {
+                return next(err);
+            }
+
+            res.status(201)
+                .json(ret);
+        });
+    } else {
+
+        let newProfesional = new profesional(req.body);
+        newProfesional.save((err) => {
+
+            if (err) {
+                console.log(err);
+                next(err);
+            }
+
+            res.json(newProfesional);
+        });
+    }
+
 });
 
 /**
@@ -323,6 +395,7 @@ router.put('/profesionales/:id', function (req, res, next) {
         if (err) {
             return next(err);
         }
+
         res.json(data);
     });
 });
@@ -357,8 +430,9 @@ router.delete('/profesionales/:id', function (req, res, next) {
         if (err) {
             return next(err);
         }
+
         res.json(data);
     });
-});
+})
 
 export = router;
