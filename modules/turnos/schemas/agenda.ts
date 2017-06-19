@@ -1,6 +1,7 @@
 import { tipoPrestacionSchema } from '../../../core/tm/schemas/tipoPrestacion';
 import * as nombreSchema from '../../../core/tm/schemas/nombre';
 import * as bloqueSchema from '../../../modules/turnos/schemas/bloque';
+import * as turnoSchema from '../../../modules/turnos/schemas/turno';
 import * as nombreApellidoSchema from '../../../core/tm/schemas/nombreApellido';
 import * as mongoose from 'mongoose';
 
@@ -29,16 +30,18 @@ let schema = new mongoose.Schema({
     },
     estado: {
         type: String,
-        enum: ['Planificacion', 'Disponible', 'Publicada', 'Suspendida', 'Pausada'],
+        enum: ['planificacion', 'disponible', 'publicada', 'suspendida', 'pausada'],
         required: true,
-        default: 'Planificacion'
+        default: 'planificacion'
     },
     // Se debe persistir el valor previo al estado de Pausada, para poder reanudar la agenda
     prePausada: {
         type: String,
-        enum: ['Planificacion', 'Disponible', 'Publicada', 'Suspendida']
+        enum: ['planificacion', 'disponible', 'publicada', 'suspendida']
     },
-    bloques: [bloqueSchema]
+    bloques: [bloqueSchema],
+    nota: String,
+    sobreturnos: [turnoSchema]
 
 });
 
@@ -47,7 +50,7 @@ schema.virtual('turnosDisponibles').get(function () {
     let turnosDisponibles = 0;
     this.bloques.forEach(function (bloque) {
         bloque.turnos.forEach(function (turno) {
-            if (turno.estado === 'disponible') {
+            if (turno.estado === 'disponible' && turno.horaInicio >= new Date()) {
                 turnosDisponibles++;
             }
         });
@@ -65,7 +68,7 @@ schema.virtual('estadosAgendas').get(function () {
 schema.pre('save', function (next) {
     // Intercalar
     if (!/true|false/i.test(this.intercalar)) {
-        next(new Error("invalido"));
+        next(new Error('invalido'));
         // TODO: loopear bloques y definir si horaInicio/Fin son required
         // TODO: si pacientesSimultaneos, tiene que haber cantidadSimultaneos (> 0)
         // TODO: si citarPorBloque, tiene que haber cantidadBloque (> 0)

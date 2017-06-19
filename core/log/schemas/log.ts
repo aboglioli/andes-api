@@ -1,4 +1,4 @@
-import { configMpi } from './../../../config';
+// import { mpi } from './../../../config';
 import * as mongoose from 'mongoose';
 import * as organizacion from '../../../core/tm/schemas/organizacion';
 
@@ -27,7 +27,7 @@ export let logSchema = new mongoose.Schema({
     organizacion: { type: organizacion },
     modulo: {
         type: String,
-        enum: ['mpi', 'turnos', 'rup']
+        enum: ['mpi', 'turnos', 'rup', 'configTipoPrestacion']
     },
     operacion: {
         type: String,
@@ -37,9 +37,12 @@ export let logSchema = new mongoose.Schema({
             // Operaciones de módulos
             // ... Mpi
             'macheoAlto', 'posibleDuplicado', 'reportarError', 'validadoScan', 'scan', 'scanFail',
+            // OperacionesElastic
+            'elasticInsert', 'elasticInsertInPut' , 'elasticUpdate', 'elasticDelete', 'elasticError',
             // ... Turnos
-            'asignarTurno', 'cancelarTurno', 'listaEspera'
+            'asignarTurno', 'cancelarTurno', 'listaEspera',
             // ... RUP
+            'pacientes'
         ]
     },
     datosOperacion: mongoose.Schema.Types.Mixed,
