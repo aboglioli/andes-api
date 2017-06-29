@@ -51,7 +51,7 @@ router.patch('/turno/:idTurno/bloque/:idBloque/agenda/:idAgenda/', function(req,
 
                                     // Ver si el día de la agenda coincide con el día de hoy
                                     if ((data as any).horaInicio >= moment(new Date()).startOf('day').toDate() && (data as any).horaInicio <= moment(new Date()).endOf('day').toDate()) {
-                                        // let esHoy = true;
+                                         esHoy = true;
                                     }
 
                                     // Contadores de "delDia" y "programado" varían según si es el día de hoy o no
