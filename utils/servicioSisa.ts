@@ -265,3 +265,79 @@ export function matchSisa(paciente) {
 }
 
 
+export function getOrganizacionSisa(codigo, usuario, clave) {
+    /**
+     * Se obtienen los datos desde Sisa
+     * Ejemplo de llamada https://sisa.msal.gov.ar/sisa/services/rest/establecimiento/{código}
+    **/
+    let xml = '';
+    // let pathSisa = 'https://sisa.msal.gov.ar/sisa/services/rest/cmdb/obtener?nrodoc=' + nroDocumento + '&usuario=' + usuario + '&clave=' + clave;
+    let pathSisa = '/sisa/services/rest/establecimiento/' + codigo;
+
+    let dataUser = JSON.stringify({
+        'usuario': usuario,
+        'clave': clave
+    });
+    let optionsgetmsg = {
+        host: 'sisa.msal.gov.ar', // nombre del dominio // (no http/https !)
+        port: 443,
+        path: pathSisa,
+        // body: dataUser,
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(dataUser)
+        },
+        rejectUnauthorized: false,
+
+    };
+
+    // Realizar POST request
+    return new Promise((resolve, reject) => {
+        let req = https.request(optionsgetmsg, function (res) {
+            res.on('data', function (d) {
+                // console.info('GET de Sisa ' + nroDocumento + ':\n');
+                if (d.toString()) {
+                    xml = xml + d.toString();
+                }
+            });
+
+            res.on('end', function () {
+
+                if (xml) {
+                    // Se parsea el xml obtenido a JSON
+                    to_json(xml, function (error, data) {
+                        if (error) {
+                            resolve([500, {}]);
+                        } else {
+                            console.log(data);
+                            resolve([res.statusCode, data]);
+                        }
+                    });
+                } else {
+                    resolve([res.statusCode, {}]);
+                }
+            });
+
+        });
+        // send request witht the postData form
+        req.write(dataUser);
+        req.end();
+        req.on('error', function (e) {
+            reject(e);
+        });
+
+    });
+}
+
+
+            // servicioSisa.getOrganizacionSisa('10580352167033', configPrivate.sisa.username, configPrivate.sisa.password)
+            // .then(resultado => {
+            //     console.log('Resultado Sisa', resultado);
+            // })
+            // .catch(err => {
+            //     console.log('Error Sisa', err);
+            // });
+
+
+
