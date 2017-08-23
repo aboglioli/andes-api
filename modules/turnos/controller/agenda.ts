@@ -451,10 +451,14 @@ export function actualizarAgendas() {
                         }
                     }
                     agenda.save((error) => {
-                        console.log('Error al actualizar agenda' + agenda.id, error);
+                        // console.log('Error al actualizar agenda' + agenda.id, error);
+                        return false;
                     });
 
                 });
+                return true;
+            } else {
+                return false;
             }
         }
     });
