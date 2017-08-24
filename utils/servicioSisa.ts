@@ -2,6 +2,11 @@ import { matching } from '@andes/match';
 import * as https from 'https';
 import * as config from '../config';
 import * as configPrivate from '../config.private';
+
+import { organizacionCacheSchema, organizacionCache } from '../core/tm/schemas/organizacionCache';
+import { recordatorio } from '../modules/mobileApp/schemas/recordatorio';
+
+let async = require('async');
 // Services
 // import { Logger } from '../utils/logService';
 let to_json = require('xmljson').to_json;
@@ -310,8 +315,39 @@ export function getOrganizacionSisa(codigo, usuario, clave) {
                         if (error) {
                             resolve([500, {}]);
                         } else {
-                            console.log(data);
-                            resolve([res.statusCode, data]);
+
+                            // resolve([res.statusCode, data]);
+                            let offset = 0;
+                            setTimeout(function () {
+
+                                let organizCache = new organizacionCache({
+                                    anioInicioActividades: data.Establecimiento.anioInicioActividades,
+                                    categoriaDeLaTipologia: data.Establecimiento.categoriaDeLaTipologia,
+                                    codIndecDepto: data.Establecimiento.codIndecDepto,
+                                    codIndecLocalidad: data.Establecimiento.codIndecLocalidad,
+                                    codIndecProvincia: data.Establecimiento.codIndecProvincia,
+                                    codigo: data.Establecimiento.codigo,
+                                    codigoSISA: data.Establecimiento.codigoSISA,
+                                    coordenadasDeMapa: data.Establecimiento.coordenadasDeMapa,
+                                    dependencia: data.Establecimiento.dependencia,
+                                    depto: data.Establecimiento.depto,
+                                    domicilio: data.Establecimiento.domicilio,
+                                    fechaModificacion: data.Establecimiento.fechaModificacion,
+                                    fechaRegistro: data.Establecimiento.fechaRegistro,
+                                    imagen: data.Establecimiento.imagen,
+                                    internacion: data.Establecimiento.internacion,
+                                    localidad: data.Establecimiento.localidad,
+                                    nombre: data.Establecimiento.nombre,
+                                    origenDelFinanciamiento: data.Establecimiento.origenDelFinanciamiento,
+                                    participaciones: data.Establecimiento.participaciones,
+                                    provincia: data.Establecimiento.provincia,
+                                    telefono: [data.Establecimiento.telefono],
+                                    tipologia: data.Establecimiento.tipologia
+                                });
+
+                                organizCache.save();
+                            }, 5000 + offset);
+
                         }
                     });
                 } else {
@@ -330,14 +366,77 @@ export function getOrganizacionSisa(codigo, usuario, clave) {
     });
 }
 
+export function getOrganizacionesSisa(usuario, clave) {
+    /**
+     * Se obtienen los datos desde Sisa
+     * Ejemplo de llamada https://sisa.msal.gov.ar/sisa/services/rest/establecimiento/{código}
+    **/
+    let xml = '';
+    let pathSisa = '/sisa/services/rest/establecimiento/buscar?provincia=15&dependencia=21&origenDeFinanciamiento=21';
 
-            // servicioSisa.getOrganizacionSisa('10580352167033', configPrivate.sisa.username, configPrivate.sisa.password)
-            // .then(resultado => {
-            //     console.log('Resultado Sisa', resultado);
-            // })
-            // .catch(err => {
-            //     console.log('Error Sisa', err);
-            // });
+    let dataUser = JSON.stringify({
+        'usuario': usuario,
+        'clave': clave
+    });
+
+    let optionsgetmsg = {
+        host: 'sisa.msal.gov.ar',
+        port: 443,
+        path: pathSisa,
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(dataUser)
+        },
+        rejectUnauthorized: false,
+    };
+
+    // Realizar POST request
+    return new Promise((resolve, reject) => {
+        let req = https.request(optionsgetmsg, function (res) {
+            res.on('data', function (d) {
+                if (d.toString()) {
+                    xml = xml + d.toString();
+                }
+            });
+
+            res.on('end', function () {
+
+                if (xml) {
+                    // Se parsea el xml obtenido a JSON
+                    to_json(xml, function (error, data) {
+                        if (error) {
+                            resolve([500, {}]);
+                        } else {
+                            let offset = 0;
+
+                            async.forEach(data.EstablecimientoSearchResponse.establecimientos.establecimientoReducido, function (establecimiento, done) {
+
+                                setTimeout(function () {
+                                    console.log('Efector: ', establecimiento.nombre);
+                                    getOrganizacionSisa(establecimiento.codigo, configPrivate.sisa.username, configPrivate.sisa.password);
+                                }, 5000 + offset);
+                                offset += 5000;
+                            });
+
+                            resolve([res.statusCode, data]);
+                        }
+                    });
+                } else {
+                    resolve([res.statusCode, {}]);
+                }
+            });
+
+        });
+        // send request witht the postData form
+        req.write(dataUser);
+        req.end();
+        req.on('error', function (e) {
+            reject(e);
+        });
+
+    });
+}
 
 
 
