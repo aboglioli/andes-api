@@ -10,6 +10,7 @@ let async = require('async');
 // Services
 // import { Logger } from '../utils/logService';
 let to_json = require('xmljson').to_json;
+const querystring = require('querystring');
 
 
 export function getSisaCiudadano(nroDocumento, usuario, clave, sexo?: string) {
@@ -366,13 +367,22 @@ export function getOrganizacionSisa(codigo, usuario, clave) {
     });
 }
 
-export function getOrganizacionesSisa(usuario, clave) {
+export function getOrganizacionesSisa(usuario, clave, options = null) {
+    let opt = {
+        provincia: (options.provincia) ? options.provincia : 25,
+        dependencia: (options.dependencia) ? options.dependencia : 21,
+        origenDeFinanciamiento: (options.origenDeFinanciamiento) ? options.origenDeFinanciamiento : 21,
+    }
+
+    const query = querystring.stringify(opt)
+
     /**
      * Se obtienen los datos desde Sisa
      * Ejemplo de llamada https://sisa.msal.gov.ar/sisa/services/rest/establecimiento/{código}
     **/
     let xml = '';
-    let pathSisa = '/sisa/services/rest/establecimiento/buscar?provincia=15&dependencia=21&origenDeFinanciamiento=21';
+    // let pathSisa = '/sisa/services/rest/establecimiento/buscar?provincia=15&dependencia=21&origenDeFinanciamiento=21';
+    let pathSisa = '/sisa/services/rest/establecimiento/buscar?' + query;
 
     let dataUser = JSON.stringify({
         'usuario': usuario,

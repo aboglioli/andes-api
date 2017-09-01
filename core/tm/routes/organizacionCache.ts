@@ -20,7 +20,13 @@ router.get('/organizacionesCache', function (req, res, next) {
 
 router.post('/organizacionesCache', function (req, res, next) {
 
-    servicioSisa.getOrganizacionesSisa(configPrivate.sisa.username, configPrivate.sisa.password);
+    let options = {
+        ...(req.body.provincia) && {'provincia': req.body.provincia},
+        ...(req.body.dependencia) && {'dependencia': req.body.dependencia},
+        ...(req.body.origenDeFinanciamiento) && {'origenDeFinanciamiento': req.body.origenDeFinanciamiento}
+    };
+
+    servicioSisa.getOrganizacionesSisa(configPrivate.sisa.username, configPrivate.sisa.password, options);
 
 });
 
