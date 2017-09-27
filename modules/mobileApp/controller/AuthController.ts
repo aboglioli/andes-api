@@ -54,7 +54,7 @@ export function envioCodigoCount(user: any) {
 export function generarCodigoVerificacion() {
     let codigo = '';
     let length = 6;
-    let caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let caracteres = '0123456789';
     for (let i = 0; i < length; i++) {
         codigo += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
     }
