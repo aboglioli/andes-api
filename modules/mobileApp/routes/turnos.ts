@@ -170,11 +170,11 @@ router.get('/turnos', function (req: any, res, next) {
             pacienteApp.find({ 'pacientes.id': pacienteId }, function (err, docs: any[]) {
                 docs.forEach(user => {
                     let devices = user.devices.map(item => item.device_id);
- 
+
                     //let date = moment(turno.horaInicio).format('DD [de] MMMM');
                     let body = 'Su turno del  fue reasignado. Haz click para más información.';
                     new PushClient().send(devices, { body, extraData: { action: 'reasignar' } });
- 
+
                 });
             });
             */
@@ -305,20 +305,24 @@ router.post('/turnos/confirmar', function (req: any, res, next) {
     });
 });
 
+
 /**
  * Crea un usuario apartir de un paciente
  * @param id {string} ID del paciente a crear
  */
 
 router.post('/create/:id', function (req: any, res, next) {
-    if (!req.user.profesional) {
-        return res.status(401).send('unauthorized');
-    }
+
+    // [2017-09-28] TODO: Revisar qué permisos chequear
+    // if (!req.user.profesional) {
+    //     return res.status(401).send('unauthorized');
+    // }
     let pacienteId = req.params.id;
     if (!mongoose.Types.ObjectId.isValid(pacienteId)) {
         return res.status(422).send({ error: 'ObjectID Inválido' });
     }
-    authController.buscarPaciente(pacienteId).then((pacienteObj) => {
+    return authController.buscarPaciente(pacienteId).then((resultado) => {
+        let pacienteObj = resultado;
         authController.createUserFromPaciente(pacienteObj).then(() => {
             return res.send({ message: 'OK' });
         }).catch((error) => {
@@ -335,16 +339,18 @@ router.post('/create/:id', function (req: any, res, next) {
  */
 
 router.get('/check/:id', function (req: any, res, next) {
-    if (!req.user.profesional) {
-        return res.status(401).send('unauthorized');
-    }
+
+    // [2017-09-28] TODO: Revisar qué permisos chequear
+    // if (!req.user.profesional) {
+    //     return res.status(401).send('unauthorized');
+    // }
 
     let pacienteId = req.params.id;
     if (!mongoose.Types.ObjectId.isValid(pacienteId)) {
         return res.status(422).send({ error: 'ObjectID Inválido' });
     }
-    authController.buscarPaciente(pacienteId).then((pacienteObj) => {
-
+    return authController.buscarPaciente(pacienteId).then((resultado) => {
+        let pacienteObj = resultado;
         authController.checkAppAccounts(pacienteObj).then(() => {
             return res.send({ message: 'OK' });
         }).catch((error) => {
@@ -354,5 +360,31 @@ router.get('/check/:id', function (req: any, res, next) {
         return res.send({ error: 'paciente_error' });
     });
 });
+
+
+/**
+ * Check estado de la cuenta
+ * @param id {string} ID del paciente a chequear
+ */
+
+router.put('/update/:id', function (req: any, res, next) {
+
+    let pacienteId = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(pacienteId)) {
+        return res.status(422).send({ error: 'ObjectID Inválido' });
+    }
+    return authController.buscarPaciente(pacienteId).then((resultado) => {
+        let pacienteObj = resultado;
+        authController.checkAppAccounts(pacienteObj).then(() => {
+            return res.send({ message: 'OK' });
+        }).catch((error) => {
+            return res.send(error);
+        });
+    }).catch(() => {
+        return res.send({ error: 'paciente_error' });
+    });
+});
+
+
 
 export = router;
