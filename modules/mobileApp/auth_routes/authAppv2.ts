@@ -8,6 +8,7 @@ import { Auth } from '../../../auth/auth.class';
 import * as agenda from '../../turnos/schemas/agenda';
 
 let router = express.Router();
+let emailRegex = /^[a-z0-9]+(\.[_a-z0-9]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,15})$/;
 
 /**
  * Obtenemos una cuenta desde un codigo y un email (opcional)
@@ -16,6 +17,9 @@ let router = express.Router();
  */
 
 function getAccount(code, email) {
+    if (!emailRegex.test(email)) {
+        return Promise.reject('email invalido')
+    }
     return pacienteApp.findOne({ codigoVerificacion: code }).then((datosUsuario: any) => {
         if (!datosUsuario) {
             return Promise.reject('no existe la cuenta');
@@ -26,6 +30,8 @@ function getAccount(code, email) {
             if (datosUsuario.email && datosUsuario.email !== email) {
                 return Promise.reject('no existe la cuenta');
             } else if (!datosUsuario.email) {
+                // el usuario puede elegir el email. Cuando se envia el codigo de forma automatia
+                // chequemos que el emial que eligio el usuario no exista
                 return pacienteApp.findOne({email: email}).then(existsEmail => {
                     if (!existsEmail) {
                         datosUsuario.email = email;
@@ -56,6 +62,10 @@ router.post('/v2/check', function (req, res, next) {
     let email = req.body.email;
     let code = req.body.code;
 
+    if (!email || !code) {
+        return next('faltan datos');
+    }
+
     getAccount(code, email).then(() => {
         res.send({ status: 'ok' });
     }).catch((err) => {
@@ -75,6 +85,10 @@ router.post('/v2/verificar', function (req, res, next) {
     let email = req.body.email;
     let code = req.body.code;
     let mpiData = req.body.paciente;
+
+    if (!email || !code) {
+        return next('faltan datos');
+    }
 
     getAccount(code, email).then((datosUsuario) => {
         authController.verificarCuenta(datosUsuario, mpiData).then(() => {
@@ -101,6 +115,9 @@ router.post('/v2/registrar', function (req, res, next) {
     let code = req.body.code;
     let password = req.body.password;
 
+    if (!email || !code || password) {
+        return next('faltan datos');
+    }
     // let mpiData = req.body.paciente;
 
     getAccount(code, email).then((datosUsuario) => {
