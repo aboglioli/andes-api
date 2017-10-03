@@ -25,9 +25,17 @@ function getAccount(code, email) {
 
             if (datosUsuario.email && datosUsuario.email !== email) {
                 return Promise.reject('no existe la cuenta');
+            } else if (!datosUsuario.email) {
+                return pacienteApp.findOne({email: email}).then(existsEmail => {
+                    if (!existsEmail) {
+                        datosUsuario.email = email;
+                        return Promise.resolve(datosUsuario);
+                    } else {
+                        return Promise.reject('email existente');
+                    }
+                });
             }
 
-            datosUsuario.email = email;
             return Promise.resolve(datosUsuario);
 
         } else {
