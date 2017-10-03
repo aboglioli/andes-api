@@ -115,7 +115,7 @@ router.post('/v2/registrar', function (req, res, next) {
     let code = req.body.code;
     let password = req.body.password;
 
-    if (!email || !code || password) {
+   if (!email || !code || !password) {
         return next('faltan datos');
     }
     // let mpiData = req.body.paciente;
