@@ -99,7 +99,7 @@ router.post('/v2/verificar', function (req, res, next) {
         return next('faltan datos');
     }
 
-    getAccount(code, email).then((datosUsuario) => {
+    getAccount(codeTostring(code), email).then((datosUsuario) => {
         authController.verificarCuenta(datosUsuario, mpiData).then(() => {
             res.send({ status: 'ok' });
         }).catch(() => {
@@ -129,7 +129,7 @@ router.post('/v2/registrar', function (req, res, next) {
     }
     // let mpiData = req.body.paciente;
 
-    getAccount(code, email).then((datosUsuario) => {
+    getAccount(codeTostring(code), email).then((datosUsuario) => {
         // [TODO] 02/10 se decide sacar el matching por un cierto tiempo
         // authController.verificarCuenta(datosUsuario, mpiData).then(() => {
             authController.habilitarCuenta(datosUsuario, password).then((user: any) => {
