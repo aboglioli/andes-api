@@ -10,6 +10,13 @@ import * as agenda from '../../turnos/schemas/agenda';
 let router = express.Router();
 let emailRegex = /^[a-z0-9]+(\.[_a-z0-9]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,15})$/;
 
+
+function codeTostring(code) {
+    let c = String(code);
+    while (c.length < 6) { c = '0' + c};
+    return c;
+}
+
 /**
  * Obtenemos una cuenta desde un codigo y un email (opcional)
  * @param code
@@ -17,14 +24,15 @@ let emailRegex = /^[a-z0-9]+(\.[_a-z0-9]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,
  */
 
 function getAccount(code, email) {
+
     if (!emailRegex.test(email)) {
         return Promise.reject('email invalido')
     }
     return pacienteApp.findOne({ codigoVerificacion: code }).then((datosUsuario: any) => {
+
         if (!datosUsuario) {
             return Promise.reject('no existe la cuenta');
         }
-        console.log(datosUsuario);
         if (datosUsuario.expirationTime.getTime() >= new Date().getTime()) {
 
             if (datosUsuario.email && datosUsuario.email !== email) {
@@ -59,6 +67,7 @@ function getAccount(code, email) {
  */
 
 router.post('/v2/check', function (req, res, next) {
+
     let email = req.body.email;
     let code = req.body.code;
 
@@ -66,7 +75,7 @@ router.post('/v2/check', function (req, res, next) {
         return next('faltan datos');
     }
 
-    getAccount(code, email).then(() => {
+    getAccount(codeTostring(code), email).then(() => {
         res.send({ status: 'ok' });
     }).catch((err) => {
         return next(err);
