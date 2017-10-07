@@ -19,7 +19,7 @@ export class Connections {
         (mongoose as any).Promise = global.Promise;
         mongoose.plugin(schemaDefaults);
         if (configPrivate.mongooseDebugMode) {
-            mongoose.set('debug', true);
+            mongoose.set('debug', false);
         }
 
         // Conecta y configura conexiones
