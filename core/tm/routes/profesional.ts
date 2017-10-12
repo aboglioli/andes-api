@@ -40,7 +40,7 @@ let uploadFirma = multer({
 /**
  * Upload Firmas
  */
-router.post('/profesionales/firma/:profId', uploadFirma,  (req, resp, errHandler) => {
+router.post('/profesionales/firma/:profId', uploadFirma,  (req:any, resp, errHandler) => {
 
     let filename = req.file.filename;
     let timestamp = parseInt(filename.split('-')[2].substr(0, filename.split('-')[2].indexOf('.')), 0);
@@ -56,7 +56,7 @@ router.post('/profesionales/firma/:profId', uploadFirma,  (req, resp, errHandler
 /**
  * Upload Fotos
  */
-router.post('/profesionales/foto/:profId', uploadFoto,  (req, resp) => {
+router.post('/profesionales/foto/:profId', uploadFoto,  (req:any, resp) => {
 
     resp.json({ fileName: req.file.filename});
 
@@ -74,7 +74,7 @@ router.get('/profesionales/matricula/:profId', (req, resp, errHandler) => {
     };
 
 
-    profesional.findById(req.params.profId).exec((err, prof) => {
+    profesional.findById(req.params.profId).exec((err, prof:any) => {
         if (err) {
             return errHandler(err);
         }

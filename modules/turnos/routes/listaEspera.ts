@@ -97,7 +97,7 @@ router.post('/listaEspera/IdAgenda/:_id', function (req, res, next) {
             });
 
         }, function (error) {
-            if (error) res.json(500, { error: error });
+            if (error) res.json({ error: error });
 
             return res.json(data);
             // return res.json(201, { msg: 'Guardado' });

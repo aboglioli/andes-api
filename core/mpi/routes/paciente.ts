@@ -1,6 +1,6 @@
 import {
-    matching
-} from '@andes/match/matching';
+    Matching
+} from '@andes/match';
 import * as express from 'express';
 import * as mongoose from 'mongoose';
 import {
@@ -445,8 +445,8 @@ router.get('/pacientes', function (req, res, next) {
                             fechaNacimiento: req.query.fechaNacimiento ? req.query.fechaNacimiento : new Date(),
                             sexo: req.query.sexo ? req.query.sexo : ''
                         };
-                        let match = new matching();
-                        let valorMatching = match.matchPersonas(paciente, pacDto, weights);
+                        let match = new Matching();
+                        let valorMatching = match.matchPersonas(paciente, pacDto, weights, 'Levenshtein');
                         paciente['id'] = hit._id;
                         if (valorMatching >= porcentajeMatchMax) {
                             listaPacientesMax.push({
@@ -533,7 +533,7 @@ router.get('/pacientes', function (req, res, next) {
  *         description: Un código de error con un array de mensajes de error
  */
 router.post('/pacientes/mpi', function (req, res, next) {
-    let match = new matching();
+    let match = new Matching();
     let newPatientMpi = new paciente(req.body);
     // Se genera la clave de blocking
     let claves = match.crearClavesBlocking(newPatientMpi);
@@ -623,7 +623,7 @@ router.delete('/pacientes/mpi/:id', function (req, res, next) {
  */
 router.post('/pacientes', function (req, res, next) {
 
-    let match = new matching();
+    let match = new Matching();
     let newPatient = new paciente(req.body);
     // Se genera la clave de blocking
     let claves = match.crearClavesBlocking(newPatient);
@@ -684,7 +684,7 @@ router.put('/pacientes/:id', function (req, res, next) {
     let query = {
         _id: objectId
     };
-    let match = new matching();
+    let match = new Matching();
 
     paciente.findById(query, function (err, patientFound: any) {
         if (err) {

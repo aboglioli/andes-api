@@ -20,7 +20,7 @@ router.get('/profesiones/:id*?', function(req, res, next) {
             if (error)
                 return next(error);
 
-            res.json(201, data);
+            res.json(data);
         });
    }
 });

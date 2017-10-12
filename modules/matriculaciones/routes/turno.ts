@@ -271,7 +271,7 @@ router.get('/turnos/:id*?', function (req, res, errorHandler) {
                 return errorHandler(error);
             }
 
-            res.json(201, data);
+            res.json(data);
         });
    }
 });

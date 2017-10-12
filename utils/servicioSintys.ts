@@ -1,5 +1,5 @@
 import { ValidateFormatDate } from './validateFormatDate';
-import  { matching } from "@andes/match/matching";
+import  { Matching } from "@andes/match";
 import * as config from '../config';
 import * as https from 'https';
 var to_json = require('xmljson').to_json;
@@ -170,7 +170,7 @@ export class servicioSintys {
         let matchPorcentaje = 0;
         let pacienteSintys = {};
         let weights = config.configMpi.weightsDefault;
-        let match = new matching();
+        let match = new Matching();
 
         paciente["matchSintys"] = 0;
         // Se buscan los datos en sintys y se obtiene el paciente
@@ -186,7 +186,7 @@ export class servicioSintys {
                                 if (resultado[0] == 200) {
                                     console.log('entro por 200');
                                     pacienteSintys = this.formatearDatosSintys(JSON.parse(resultado[1])[0]);
-                                    matchPorcentaje = match.matchPersonas(paciente, pacienteSintys, weights);
+                                    matchPorcentaje = match.matchPersonas(paciente, pacienteSintys, weights,'Levenshtein');
                                     console.log('el % de matcheo es:', matchPorcentaje);
                                     paciente["matchSintys"] = matchPorcentaje;
                                     resolve({ "paciente": paciente, "matcheos": { "entidad": "Sintys", "matcheo": matchPorcentaje, "datosPaciente": pacienteSintys } });

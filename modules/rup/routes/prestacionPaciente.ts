@@ -27,18 +27,18 @@ router.get('/prestaciones/forKey', function (req, res, next) {
             if (prestaciones.length > 0) {
                 prestaciones.forEach(prestacion => {
                     // if (lista.length <= 0) {
-                    prestacion.ejecucion.evoluciones.forEach(evolucion => {
-                        let valor = evolucion.valores;
-                        lista = findValues(valor, key);
-                        if (lista.length > 0) {
-                            listaValores = listaValores.concat(lista);
-                        }
-                    });
+                    // prestacion.ejecucion.evoluciones.forEach(evolucion => {
+                    //     let valor = evolucion.valores;
+                    //     lista = findValues(valor, key);
+                    //     if (lista.length > 0) {
+                    //         listaValores = listaValores.concat(lista);
+                    //     }
+                    // });
 
-                    if (listaValores.length > 0) {
-                        listakey.push({ 'valor': listaValores[listaValores.length - 1], 'fecha': prestacion.ejecucion.fecha });
-                        listaValores = [];
-                    }
+                    // if (listaValores.length > 0) {
+                    //     listakey.push({ 'valor': listaValores[listaValores.length - 1], 'fecha': prestacion.ejecucion.fecha });
+                    //     listaValores = [];
+                    // }
                     //}
 
                 });
@@ -234,9 +234,9 @@ router.put('/prestaciones/:id', function (req, res, next) {
             return next(err);
         }
 
-        let evoluciones = data.ejecucion.evoluciones;
-        evoluciones.push(evolucion);
-        prestacion.ejecucion.evoluciones = evoluciones;
+        // let evoluciones = data.ejecucion.evoluciones;
+        // evoluciones.push(evolucion);
+        // prestacion.ejecucion.evoluciones = evoluciones;
 
         Auth.audit(prestacion, req);
 
