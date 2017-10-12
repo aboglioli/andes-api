@@ -1,11 +1,11 @@
 import * as mongoose from 'mongoose';
+import { Connections } from './../../../connections';
 import * as mongoosastic from 'mongoosastic';
 import * as direccionSchema from '../../tm/schemas/direccion';
 import * as contactoSchema from '../../tm/schemas/contacto';
 import * as financiadorSchema from './financiador';
 import * as constantes from './constantes';
 import * as config from '../../../config';
-import { connectMpi } from '../../../connectMpi';
 import * as moment from 'moment';
 
 export let pacienteSchema = new mongoose.Schema({
@@ -123,9 +123,9 @@ pacienteSchema.index({
 // });
 
 // Habilitar plugin de auditoría
+// Habilitar plugin de auditoría
 pacienteSchema.plugin(require('../../../mongoose/audit'));
 
-
 export let paciente = mongoose.model('paciente', pacienteSchema, 'paciente');
-export let pacienteMpi = connectMpi.model('paciente', pacienteSchema, 'paciente');
+export let pacienteMpi = Connections.mpi.model('paciente', pacienteSchema, 'paciente');
 

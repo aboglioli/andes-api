@@ -8,26 +8,18 @@ import { Express } from 'express';
 import * as express from 'express';
 let requireDir = require('require-dir');
 let path = require('path');
+import { Connections } from './connections';
 
 export function initAPI(app: Express) {
-    // Configuración de Mongoose
-    if (config.mongooseDebugMode) {
-        mongoose.set('debug', true);
-    }
-    mongoose.connect(config.connectionStrings.mongoDB_main);
-    mongoose.plugin(schemaDefaults);
-    mongoose.connection.on('connected', function () {
-        console.log('[Mongoose] Conexión OK');
-    });
-    mongoose.connection.on('error', function (err) {
-        console.log('[Mongoose] No se pudo conectar al servidor');
-    });
-
+  
     // Inicializa la autenticación con Password/JWT
     Auth.initialize(app);
 
+    // Inicializa Mongoose
+    Connections.initialize();
+
     // Configura Express
-    app.use(bodyParser.json());
+    app.use(bodyParser.json({ limit: '150mb' }));
     app.use(bodyParser.urlencoded({
         extended: true
     }));
@@ -49,11 +41,12 @@ export function initAPI(app: Express) {
         if (config.modules[m].active) {
             let routes = requireDir(config.modules[m].path);
             for (let route in routes) {
-                if (config.modules[m].auth) {
-                    app.use('/api' + config.modules[m].route, Auth.authenticate(), routes[route]);
+                if (config.modules[m].middleware) {
+                    app.use('/api' + config.modules[m].route, config.modules[m].middleware, routes[route]);
                 } else {
                     app.use('/api' + config.modules[m].route, routes[route]);
                 }
+
             }
         }
     }
