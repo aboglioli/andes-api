@@ -1,9 +1,9 @@
 import * as mongoose from 'mongoose';
 
 var agendaMatriculacionesSchema = new mongoose.Schema({
-    diasHabilitados: { type: [String], required: true },
-    horarioInicioTurnos: { type: Number, required: true },
-    horarioFinTurnos: { type: Number, required: true },
+    diasHabilitados: { type: Array, required: true },
+    horarioInicioTurnos: { type: String, required: true },
+    horarioFinTurnos: { type: String, required: true },
     fechasExcluidas: [Date],
     duracionTurno: { type: Number, required: true }
 });

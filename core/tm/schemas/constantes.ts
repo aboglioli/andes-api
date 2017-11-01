@@ -9,7 +9,7 @@ const constantes = {
         enum: ['casado', 'separado', 'divorciado', 'viudo', 'soltero', 'otro']
     },
     CONTACTO: {
-        type: String,
+        type: Array,
         enum: ['fijo', 'celular', 'email']
     }
 };

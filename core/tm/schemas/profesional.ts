@@ -21,62 +21,65 @@ let matriculacionSchema = new mongoose.Schema({
 export let profesionalSchema = new mongoose.Schema({
 	// Persona
     habilitado: { type: Boolean, default: true },
-    nombre: { type: String, required: true },
-    apellido: { type: String, required: true },
-    documentoNumero: { type: String, required: true },
+    nombre: { type: String, required: false },
+    apellido: { type: String, required: false },
+    documentoNumero: { type: String, required: false },
     documentoVencimiento: { type: Date, required: false },
-    cuit: { type: String, required: true },
-    fechaNacimiento: { type: Date, required: true },
-    lugarNacimiento: { type: String, required: true },
+    cuit: { type: String, required: false },
+    fechaNacimiento: { type: Date, required: false },
+    lugarNacimiento: { type: String, required: false },
     fechaFallecimiento: { type: Date, required: false },
-    nacionalidad: { type: ObjSIISASchema, required: true },
-    sexo: { type: ObjSIISASchema, required: true },
+    nacionalidad: { type: ObjSIISASchema, required: false },
+    sexo: { type: ObjSIISASchema, required: false },
     // #estadoCivil: constantes.estadoCivil,
     contactos: [contactoSchema],
     domicilios: [direccionSchema],
-    fotoArchivo: String,
+    fotoArchivo: { type: String, required: false },
     firmas: [{
-        imgArchivo: String,
-        fecha: Date
+        imgArchivo: { type: String, required: false },
+        fecha: { type: String, required: false },
     }],
 	// ??
-    incluidoSuperintendencia: { type: Boolean, default: true },
+    incluidoSuperintendencia: { type: Boolean, default: false },
 	// Formacion
     formacionGrado: [{
-        profesion: { type: ObjSIISASchema, required: true },
-        entidadFormadora: { type: ObjSIISASchema, required: true },
-        titulo: { type: String, required: true },
-        fechaTitulo: { type: Date, required: true },
+        profesion: { type: ObjSIISASchema, required: false },
+        entidadFormadora: { type: ObjSIISASchema, required: false },
+        titulo: { type: String, required: false },
+        fechaTitulo: { type: Date, required: false },
         revalida: { type: Boolean, default: false },
         matriculacion: [matriculacionSchema]
     }],
     formacionPosgrado: [{
-        profesion: { type: ObjSIISASchema, required: true },
-        institucionFormadora: { type: ObjSIISASchema, required: true },
-        especialidad: { type: ObjSIISASchema, required: true },
-        fechaIngreso: { type: Date, required: true },
-        fechaEgreso: { type: Date, required: true },
-        observacion: String,
-        certificacion: {
-            fecha: { type: Date, required: true },
-            modalidad: { type: ObjSIISASchema, required: true },
-            establecimiento: { type: ObjSIISASchema, required: true },
-        },
-        matriculacion: [matriculacionSchema]
-    }],
-    origen: {
-        type: String,
-        enum: ['matriculación', 'rrhh', 'colegio de psicólogos']
-    },
+         profesion: { type: ObjSIISASchema, required: false },
+         institucionFormadora: { type: ObjSIISASchema, required: false },
+         especialidad: { type: ObjSIISASchema, required: false },
+         fechaIngreso: { type: Date, required: false },
+         fechaEgreso: { type: Date, required: false },
+         observacion: String,
+         certificacion: {
+           fecha: { type: Date, required: false },
+             modalidad: { type: ObjSIISASchema, required: false },
+             establecimiento: { type: ObjSIISASchema, required: false },
+         },
+         matriculacion: [matriculacionSchema]
+     }],
+    // origen: {
+    //     type: String,
+    //     enum: ['matriculación', 'rrhh', 'colegio de psicólogos']
+    // },
     sanciones: [{
-        numero: {type: Number, required: true},
-        sancion: {type: String, required: true},
-        motivo: {type: String, required: true},
-        normaLegal: {type: String, required: true},
-        fecha: {type: Date, required: true},
-        vencimiento: {type: Date, required: true}
-    }],
-    notas: { type: String, required: false },
+         numero: {type: Number, required: false},
+         sancion: {
+            id: Number,
+            nombre: String,
+        },
+        motivo: {type: String, required: false},
+        normaLegal: {type: String, required: false},
+         fecha: {type: Date, required: false},
+         vencimiento: {type: Date, required: false}
+     }],
+     notas: { type: String, required: false },
 });
 
 
@@ -102,4 +105,4 @@ profesionalSchema.virtual('ultimaFirma').get(function() {
     })[0];
 });
 
-export let profesional = mongoose.model('profesional', profesionalSchema, 'profesional');
+export let profesional = mongoose.model('profesionalM', profesionalSchema, 'profesionalM');

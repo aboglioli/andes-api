@@ -20,7 +20,7 @@ export const Sexo = model<SIISAObject>('SIISASexo', ObjSIISASchema, 'siisa_sexo'
 export const Pais = model<SIISAObject>('SIISAPais', ObjSIISASchema, 'siisa_pais');
 export const Profesion = model<SIISAObject>('SIISAProfesion', ObjSIISASchema, 'siisa_profesion');
 export const EntidadFormadora = model<SIISAObject>('SIISAEntidadFormadora', ObjSIISASchema, 'siisa_entidadFormadora');
-export const Especialidad = model<SIISAObject>('SIISAEspecialidad', ObjSIISASchema, 'siisa_especialidad');
+export const Especialidad = model<SIISAObject>('SIISAEspecialidad', ObjSIISASchema, 'especialidad');
 export const ModalidadCertificacionEspecialidad = model<SIISAObject>('SIISAModalidadCertificacionEspecialidad', ObjSIISASchema, 'siisa_modalidadCertificacionEspecialidad')
 export const EstablecimientoCertificador = model<SIISAObject>('SIISAEstablecimientoCertificador', ObjSIISASchema, 'siisa_establecimientoCertificador')
 

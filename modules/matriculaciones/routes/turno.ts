@@ -69,9 +69,11 @@ router.get('/turnos/proximos/?', function(request, response, errorHandler) {
 
     let busquedaTurno = {
         fecha: { $gte: fechaConsulta }
+      
     };
+    console.log(fechaConsulta);
 
-    if (request.query.nombre || request.query.apellido || request.query.documentoNumero) {
+    if (request.query.nombre || request.query.apellido || request.query.documentoNumero ) {
 
         let busquedaProfesional = {};
 
@@ -87,6 +89,7 @@ router.get('/turnos/proximos/?', function(request, response, errorHandler) {
             busquedaProfesional['documentoNumero'] = new RegExp(request.query.documentoNumero, 'i');
         }
 
+     
         profesional.find(busquedaProfesional).select('_id').exec(function(errProf, profesionales) {
 
             if (errProf) {
@@ -105,7 +108,7 @@ router.get('/turnos/proximos/?', function(request, response, errorHandler) {
                 .limit(chunkSize)
                 .exec((errTurno, data) => {
                     responseData.data = data;
-
+                
                     if (errTurno) {
                         return errorHandler(errTurno);
                     }
@@ -134,11 +137,11 @@ router.get('/turnos/proximos/?', function(request, response, errorHandler) {
 
                 turno.count(busquedaTurno).populate('profesional').exec(function(err, count) {
                     responseData.totalPages = Math.floor(count / chunkSize);
-
+                  
                     if (error) {
                         return errorHandler(error);
                     }
-
+                    console.log(responseData)
                     response.status(201).json(responseData);
                 });
         });

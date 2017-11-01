@@ -17,7 +17,7 @@ router.get('/agendaMatriculaciones/:id*?', function (req, res, next) {
 });
 
 router.post('/agendaMatriculaciones', function (req, res, next) {
-
+    console.log(req.body)
     var newAgenda = new agenda(req.body);
     newAgenda.save((err) => {
         if (err) {

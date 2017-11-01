@@ -5,22 +5,31 @@ import * as SIISA from './../../../core/tm/schemas/siisa';;
 
 var router = express.Router();
 
-router.get('/numeraciones/:codigo', (request, response, errorHandler) => {
+// router.get('/numeraciones/codigo', (request, response, errorHandler) => {
+//     console.log(request.params.codigo)
+//     NumeracionMatriculas.find({        
+//         'profesion.id': request.params.codigo
+//     }).exec((error, numeraciones) => {
 
-    NumeracionMatriculas.find({        
-        'profesion.codigo': request.params.codigo
-    }).exec((error, numeraciones) => {
-
-        if (error) {
-            return errorHandler(error);
-        }
+//         if (error) {
+//             return errorHandler(error);
+//         }
         
-        response.json(numeraciones[0]);
+//         response.json(numeraciones[0]);
        
 
-    });
-})
+//     });
+// })
 
+router.get('/numeraciones/:id*?', function (req, res, next) {
+
+    NumeracionMatriculas.find({'profesion._id': req.params.id}, function (err, data) {
+            if (err) {
+                next(err);
+            };
+            res.json(data);
+        });
+    });
 
 /**
  * 
@@ -36,9 +45,9 @@ router.get('/numeraciones/?', function(request, response, errorHandler) {
     };
 
     var busquedaNumeracion = {};
-
+    console.log(request.query.codigo);
     if (request.query.codigo) {
-        busquedaNumeracion['profesion.codigo'] = parseInt(request.query.codigo);
+        busquedaNumeracion['profesion._id'] = request.query.codigo;
     }
 
     NumeracionMatriculas.find(busquedaNumeracion)
@@ -101,21 +110,28 @@ router.get('/numeracionesRestart', (req, resp, errorHandler) => {
  * 
  */
 router.post('/numeraciones', function(request, response, errorHandler) {
-
-    if (request.body.id) {
-
+    
+    console.log(request.body)
+    if (request.body._id) {
+        console.log("update numeracion")
         NumeracionMatriculas.findByIdAndUpdate(request.body.id, request.body, (error, numeracion) => {
             
             if (error) {
                 return errorHandler(error);
             }
 
-            response.status(201)
-                .json(numeracion);    
+            response.json(numeracion);    
         });
 
-    } else {
 
+
+
+
+
+        
+
+    } else {
+        console.log("insert")
         const newNum = new NumeracionMatriculas(request.body);
 
         newNum.save((error, numeracion) => {

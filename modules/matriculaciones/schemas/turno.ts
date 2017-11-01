@@ -7,7 +7,7 @@ let turnoSchena = new mongoose.Schema({
         enum: ['matriculacion', 'renovacion']
     },
     sePresento: { type: Boolean, default: false },
-    profesional: { type: mongoose.Schema.Types.ObjectId, ref: 'profesional' }
+    profesional: { type: mongoose.Schema.Types.ObjectId, ref: 'profesionalM' }
 });
 
 // Virtuals

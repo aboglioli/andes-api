@@ -5,9 +5,9 @@ import * as ubicacionSchema from './ubicacion';
 let schema = new mongoose.Schema({
     tipo: {
         type: String,
-        enum: ['Real', 'Legal', 'Profesional'],
         required: true
     },
+    direccion: String,
     valor: String,
     codigoPostal: String,
     ubicacion: ubicacionSchema,

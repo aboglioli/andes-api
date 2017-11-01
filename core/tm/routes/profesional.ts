@@ -297,15 +297,48 @@ router.get('/profesionales/matricula/:profId', (req, resp, errHandler) => {
  *           $ref: '#/definitions/profesional'
  */
 router.get('/profesionales/:id*?', function (req, res, next) {
+    if(req.params.id){
+       
+     profesional.findById( req.params.id, function (err, data) {
+         if (err) {
+             next(err);
+         };
 
-    profesional.findById( req.params.id, function (err, data) {
-        if (err) {
-            next(err);
-        };
+         res.json(data);
+     });
+    }else{
+        let query = profesional.find({});
+        
+                if (req.query.busquedaDoc) {
+                    query.where('documentoNumero').equals(RegExp('^.*' + req.query.busquedaDoc + '.*$', 'i'));
+                }
+                if (req.query.busquedaApellido) {
+                    query.where('apellido').equals(RegExp('^.*' + req.query.busquedaApellido + '.*$', 'i'));
+                }
 
-        res.json(data);
-    });
+                query.exec(function (err, data) {
+                    if (err) {
+                        return next(err);
+                    }
+                    if (req.params.id && !data) {
+                        return next(404);
+                    }
+                    res.json(data);
+                });
+        // profesional.find({}, function(err, prof) {
+        //     res.json(prof)  
+        //   });
+    }
+
+
 });
+
+
+
+router.get('/profesionales/', function (req, res, next) {
+
+ 
+    });
 
 /**
  * @swagger
@@ -335,18 +368,26 @@ router.get('/profesionales/:id*?', function (req, res, next) {
 router.post('/profesionales', function (req, res, next) {
 
     if (req.body.id) {
-
-        profesional.findByIdAndUpdate(req.body.id, req.body, { new: true }, (err, ret) => {
-            if (err) {
+         profesional.findByIdAndUpdate(req.body.id, req.body, { new: true }, function (err, data) {
+             if (err) {
                 return next(err);
             }
+             console.log("update");
+            res.json(data);
+          
+         
+         });
 
-            res.status(201)
-                .json(ret);
-        });
+        // profesional.findByIdAndUpdate(req.body.id, { new: true }, function (err, tank) {
+        //     if (err){ console.log(err)}
+        //     console.log(req.body.sanciones);
+        //     res.send(profesional);
+        //   });
+        
     } else {
-
+        console.log("insertar");
         let newProfesional = new profesional(req.body);
+        console.log(req.body),
         newProfesional.save((err) => {
 
             if (err) {
@@ -426,7 +467,7 @@ router.put('/profesionales/:id', function (req, res, next) {
  *           $ref: '#/definitions/profesional'
  */
 router.delete('/profesionales/:id', function (req, res, next) {
-    profesional.findByIdAndRemove(req.params._id, function (err, data) {
+    profesional.findByIdAndRemove(req.params.id, function (err, data) {
         if (err) {
             return next(err);
         }

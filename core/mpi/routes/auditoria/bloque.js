@@ -1,9 +1,9 @@
 "use strict";
-var servicioSintys_1 = require("../../../../utils/servicioSintys");
-var express = require("express");
-var paciente_1 = require("../../schemas/paciente");
-var servicioSisa_1 = require("../../../../utils/servicioSisa");
-var config = require("../../../../config");
+const servicioSintys_1 = require("../../../../utils/servicioSintys");
+const express = require("express");
+const paciente_1 = require("../../schemas/paciente");
+const servicioSisa_1 = require("../../../../utils/servicioSisa");
+const config = require("../../../../config");
 var router = express.Router();
 router.get('/bloques/:idTipoBloque', function (req, res, next) {
     if (req.params.idTipoBloque) {
@@ -28,10 +28,10 @@ router.get('/bloques/:idTipoBloque', function (req, res, next) {
                 next(err);
             }
             ;
-            var claves = data.map(function (elemt) {
+            var claves = data.map(elemt => {
                 var dato = elemt._id;
                 return dato;
-            }).filter(function (n) {
+            }).filter(n => {
                 return (n != undefined && n != null && n != "");
             });
             res.json(claves);
@@ -51,7 +51,7 @@ router.get('/bloques/pacientes/:idTipoBloque/:idBloque', function (req, res, nex
         }
         ;
         var lista;
-        lista = data.map(function (ele) {
+        lista = data.map(ele => {
             return {
                 "paciente": ele,
                 "matcheos": null
@@ -66,23 +66,23 @@ router.get('/bloques/pacientesSisa/:idTipoBloque/:idBloque', function (req, res,
     query[filtro] = {
         $eq: req.params.idBloque
     };
-    var listaPac = [];
+    let listaPac = [];
     paciente_1.paciente.find(query, function (err, data) {
         if (err) {
             next(err);
         }
         ;
-        var servSisa = new servicioSisa_1.servicioSisa();
-        var pacientesRes = [];
-        var weights = config.configMpi.weightsDefault;
-        var listaPac;
+        let servSisa = new servicioSisa_1.servicioSisa();
+        let pacientesRes = [];
+        let weights = config.configMpi.weightsDefault;
+        let listaPac;
         listaPac = data;
         listaPac.forEach(function (elem) {
             var valorSisa = 0;
             var auxPac = elem;
             pacientesRes.push(servSisa.matchSisa(auxPac));
         });
-        Promise.all(pacientesRes).then(function (values) {
+        Promise.all(pacientesRes).then(values => {
             var arrPacValidados;
             arrPacValidados = values;
             var arrSalida = [];
@@ -96,13 +96,13 @@ router.get('/bloques/pacientesSisa/:idTipoBloque/:idBloque', function (req, res,
                     arrSalida.push(datoPac);
                 }
             });
-            Promise.all(arrSalida).then(function (PacSal) {
+            Promise.all(arrSalida).then(PacSal => {
                 res.json(PacSal);
-            }).catch(function (err) {
+            }).catch(err => {
                 console.log(err);
                 next(err);
             });
-        }).catch(function (err) {
+        }).catch(err => {
             console.log(err);
             next(err);
         });
@@ -149,10 +149,10 @@ router.post('/bloques/pacientes/validar', function (req, res, next) {
     var entidad = req.body.entidad;
     var servSisa = new servicioSisa_1.servicioSisa();
     var datoCompleto = { "paciente": pacienteVal, "matcheos": { "entidad": entidad, "matcheo": 0, "datosPaciente": {} } };
-    servSisa.validarPaciente(datoCompleto, entidad).then(function (resultado) {
+    servSisa.validarPaciente(datoCompleto, entidad).then(resultado => {
         res.json(resultado);
     })
-        .catch(function (err) {
+        .catch(err => {
         return next(err);
     });
 });
@@ -165,10 +165,10 @@ router.post('/bloques/pacientes/validarActualizar', function (req, res, next) {
     console.log("entidad", entidad);
     var datoCompleto = { "paciente": pacienteVal, "matcheos": { "entidad": entidad, "matcheo": 0, "datosPaciente": datosPacEntidad } };
     console.log("Dato Completo", datoCompleto);
-    servSisa.validarActualizarPaciente(datoCompleto, entidad, datosPacEntidad).then(function (resultado) {
+    servSisa.validarActualizarPaciente(datoCompleto, entidad, datosPacEntidad).then(resultado => {
         res.json(resultado);
     })
-        .catch(function (err) {
+        .catch(err => {
         return next(err);
     });
 });
@@ -196,7 +196,7 @@ router.get('/bloques/pacientesSintys/:idb/:id', function (req, res, next) {
             var auxPac = elem;
             pacientesRes.push(servSintys.matchSintys(auxPac));
         });
-        Promise.all(pacientesRes).then(function (values) {
+        Promise.all(pacientesRes).then(values => {
             //console.log("Inicia Promise All");
             var arrPacValidados;
             arrPacValidados = values;
@@ -211,14 +211,14 @@ router.get('/bloques/pacientesSintys/:idb/:id', function (req, res, next) {
                     arrSalida.push(datoPac);
                 }
             });
-            Promise.all(arrSalida).then(function (PacSal) {
+            Promise.all(arrSalida).then(PacSal => {
                 //console.log("devuelvo el array", PacSal);
                 res.json(PacSal);
-            }).catch(function (err) {
+            }).catch(err => {
                 console.log(err);
                 return next(err);
             });
-        }).catch(function (err) {
+        }).catch(err => {
             console.log(err);
             return next(err);
         });
