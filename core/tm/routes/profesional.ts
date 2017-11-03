@@ -8,57 +8,26 @@ import * as fs from 'fs';
 
 let router = express.Router();
 
-/**
- * Multer (File Upload)
- */
-let storageFotos = multer.diskStorage({
-    destination: function(req, file, cb) {
-        cb(null, './modules/matriculaciones/uploads/fotos');
-    },
-    filename: function(req, file, cb) {
-        cb(null, 'prof-' + req.params.profId + '.' + file.originalname.split('.')[file.originalname.split('.').length - 1]);
-    }
-});
 
-let uploadFoto = multer({
-    storage: storageFotos
-}).single('file');
-
-let storageFirmas = multer.diskStorage({
-    destination: function(req, file, cb) {
-        cb(null, './modules/matriculaciones/uploads/firmas');
-    },
-    filename: function(req, file, cb) {
-        cb(null, 'firma-' + req.params.profId + '-' + Date.now().toString() + '.' + file.originalname.split('.')[file.originalname.split('.').length - 1]);
-    }
-});
-
-let uploadFirma = multer({
-    storage: storageFirmas
-}).single('file');
 
 /**
  * Upload Firmas
  */
-router.post('/profesionales/firma/:profId', uploadFirma,  (req:any, resp, errHandler) => {
+router.post('/profesionales/firma/:profId',  (req:any, resp, errHandler) => {
 
-    let filename = req.file.filename;
+    let filename = req.filename;
     let timestamp = parseInt(filename.split('-')[2].substr(0, filename.split('-')[2].indexOf('.')), 0);
 
-    let oFirma = {
-        imgArchivo: filename,
-        fecha: new Date(timestamp)
-    };
-    resp.json(oFirma);
+    resp.json(filename);
 
 });
 
 /**
  * Upload Fotos
  */
-router.post('/profesionales/foto/:profId', uploadFoto,  (req:any, resp) => {
+router.post('/profesionales/foto/:profId',  (req:any, resp) => {
 
-    resp.json({ fileName: req.file.filename});
+    resp.json({ fileName: req.filename});
 
 });
 
