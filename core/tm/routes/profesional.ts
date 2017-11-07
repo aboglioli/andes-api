@@ -1,4 +1,5 @@
 import { defaultLimit, maxLimit } from './../../../config';
+import * as mongoose from 'mongoose';
 import * as express from 'express'
 import { profesional } from '../schemas/profesional'
 import * as utils from '../../../utils/utils'
@@ -26,10 +27,70 @@ router.post('/profesionales/firma/:profId',  (req:any, resp, errHandler) => {
  * Upload Fotos
  */
 router.post('/profesionales/foto/:profId',  (req:any, resp) => {
+    
+        resp.json({ fileName: req.filename});
+    
+    });
 
-    resp.json({ fileName: req.filename});
+// router.post('/profesionales/grid',  (req:any, resp,errHandler) => {
+//     var mongo = require('mongodb');
+//     var Grid = require('gridfs-stream');
+//     console.log("hola")
+//     // create or use an existing mongodb-native db instance.
+//     // for this example we'll just create one:
+//     var db = new mongo.Db('grid', new mongo.Server("127.0.0.1", 27017));
+    
+//     // make sure the db instance is open before passing into `Grid`
+//     db.open(function (err) {
+//       if (err) return errHandler(err);
+//       var gfs = Grid(db, mongo);
+//       console.log("hola2")
 
-});
+//       var writestream = gfs.createWriteStream({filename: 'user.png'});
+//       fs.createReadStream(__dirname + '/user.png').pipe(writestream);
+//       // all set!
+
+//       writestream.on('close', function (file) {
+//         // do something with `file`
+//         console.log(file.filename);
+//       });
+//     })
+
+    
+// });
+
+
+// router.get('/profesionales/grid',  (req:any, resp,errHandler) => {
+//     var mongo = require('mongodb');
+//     var Grid = require('gridfs-stream');
+//     console.log("hola")
+//     // create or use an existing mongodb-native db instance.
+//     // for this example we'll just create one:
+//     var db = new mongo.Db('grid', new mongo.Server("127.0.0.1", 27017));
+    
+
+//     // make sure the db instance is open before passing into `Grid`
+//     db.open(function (err) {
+//       if (err) return errHandler(err);
+//       var gfs = Grid(db, mongo);
+//       console.log("hola2")
+// //write content to file system
+// var fs_write_stream = fs.createWriteStream('user.png');
+
+// //read from mongodb
+// var readstream = gfs.createReadStream({
+//     filename: 'user.png'
+// });
+// readstream.pipe(fs_write_stream);
+// fs_write_stream.on('close', function () {
+//     console.log('file has been written fully!');
+// });
+
+//     })
+
+    
+// });
+
 
 /**
  * Get Base64 imgs
@@ -335,38 +396,45 @@ router.get('/profesionales/', function (req, res, next) {
  *           $ref: '#/definitions/profesional'
  */
 router.post('/profesionales', function (req, res, next) {
+        console.log(req.body.documentoNumero)
+     
+                if (req.body.id) {
+                     profesional.findByIdAndUpdate(req.body.id, req.body, { new: true }, function (err, data) {
+                         if (err) {
+                            return next(err);
+                        }
+                         console.log("update");
+                        res.json(data);
+                      
+                     
+                     });
+                    
+                } else {
+                    profesional.findOne({ 'documentoNumero': req.body.documentoNumero }, function (err, person) {
+                        if(person !== null){
+                            res.json(null);
+                        }
+                        else{
+                            console.log("insertar");
+                            let newProfesional = new profesional(req.body);
+                            console.log(req.body),
+                            newProfesional.save((err) => {
+                    
+                                if (err) {
+                                    console.log(err);
+                                    next(err);
+                                }
+                    
+                                res.json(newProfesional);
+                            });
 
-    if (req.body.id) {
-         profesional.findByIdAndUpdate(req.body.id, req.body, { new: true }, function (err, data) {
-             if (err) {
-                return next(err);
-            }
-             console.log("update");
-            res.json(data);
+                        }
+
+                     })
+                 
+                }
+            
           
-         
-         });
-
-        // profesional.findByIdAndUpdate(req.body.id, { new: true }, function (err, tank) {
-        //     if (err){ console.log(err)}
-        //     console.log(req.body.sanciones);
-        //     res.send(profesional);
-        //   });
-        
-    } else {
-        console.log("insertar");
-        let newProfesional = new profesional(req.body);
-        console.log(req.body),
-        newProfesional.save((err) => {
-
-            if (err) {
-                console.log(err);
-                next(err);
-            }
-
-            res.json(newProfesional);
-        });
-    }
 
 });
 
