@@ -5,7 +5,7 @@ const constantes = {
         enum: ['femenino', 'masculino', 'otro']
     },
     ESTADOCIVIL: {
-        type: String,
+        type: Array,
         enum: ['casado', 'separado', 'divorciado', 'viudo', 'soltero', 'otro']
     },
     CONTACTO: {

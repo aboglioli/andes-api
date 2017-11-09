@@ -31,7 +31,7 @@ export let profesionalSchema = new mongoose.Schema({
     fechaFallecimiento: { type: Date, required: false },
     nacionalidad: { type: ObjSIISASchema, required: false },
     sexo: { type: ObjSIISASchema, required: false },
-    // #estadoCivil: constantes.estadoCivil,
+    estadoCivil: constantes.ESTADOCIVIL,
     contactos: [contactoSchema],
     domicilios: [direccionSchema],
     fotoArchivo: { type: String, required: false },
