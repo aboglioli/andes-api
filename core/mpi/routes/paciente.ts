@@ -145,118 +145,118 @@ import { log } from '../../log/schemas/log';
 
 
 /*Consultas de estado de pacientes para el panel de información*/
-router.get('/pacientes/counts/', function (req, res, next) {
-    /* Este get es público ya que muestra sólamente la cantidad de pacientes en MPI */
-    let filtro;
-    switch (req.query.consulta) {
-        case 'validados':
-            filtro = {
-                estado: 'validado'
-            };
-            break;
-        case 'temporales':
-            filtro = {
-                estado: 'temporal'
-            };
-            break;
-        case 'fallecidos':
-            filtro = {
-                fechaFallecimiento: {
-                    $exists: true
-                }
-            };
-            break;
-    }
-    let query = paciente.find(filtro).count();
-    query.exec(function (err, data) {
-        if (err) {
-            return next(err);
+router.get('/pacientes/counts/', function(req, res, next) {
+  /* Este get es público ya que muestra sólamente la cantidad de pacientes en MPI */
+  let filtro;
+  switch (req.query.consulta) {
+    case 'validados':
+      filtro = {
+        estado: 'validado'
+      };
+      break;
+    case 'temporales':
+      filtro = {
+        estado: 'temporal'
+      };
+      break;
+    case 'fallecidos':
+      filtro = {
+        fechaFallecimiento: {
+          $exists: true
         }
+      };
+      break;
+  }
+  let query = paciente.find(filtro).count();
+  query.exec(function(err, data) {
+    if (err) {
+      return next(err);
+    }
 
-        let queryMPI = pacienteMpi.find(filtro).count();
-        queryMPI.exec(function (err1, data1) {
-            if (err1) {
-                return next(err1);
-            }
-            let total = data + data1;
-            res.json(total);
-        });
-
+    let queryMPI = pacienteMpi.find(filtro).count();
+    queryMPI.exec(function(err1, data1) {
+      if (err1) {
+        return next(err1);
+      }
+      let total = data + data1;
+      res.json(total);
     });
+
+  });
 });
 
-router.get('/pacientes/dashboard/', function (req, res, next) {
-    /**
-     * Se requiere autorización para acceder al dashboard de MPI
-     */
-    if (!Auth.check(req, 'mpi:paciente:dashboard')) {
-        return next(403);
+router.get('/pacientes/dashboard/', function(req, res, next) {
+  /**
+   * Se requiere autorización para acceder al dashboard de MPI
+   */
+  // if (!Auth.check(req, 'mpi:paciente:dashboard')) {
+  //     return next(403);
+  // }
+  let result = {
+    paciente: null,
+    pacienteMpi: null,
+    logs: null
+  };
+
+  paciente.aggregate([{
+    $group: {
+      '_id': {
+        'estado': '$estado'
+      },
+      'count': {
+        '$sum': 1
+      }
     }
-    let result = {
-        paciente: null,
-        pacienteMpi: null,
-        logs: null
-    };
-
-    paciente.aggregate([{
+  }],
+    function(err, data) {
+      if (err) {
+        return next(err);
+      }
+      result.paciente = data;
+      pacienteMpi.aggregate([{
         $group: {
-            '_id': {
-                'estado': '$estado'
-            },
-            'count': {
-                '$sum': 1
-            }
+          '_id': {
+            'estado': '$estado'
+          },
+          'count': {
+            '$sum': 1
+          }
         }
-    }],
-        function (err, data) {
-            if (err) {
-                return next(err);
-            }
-            result.paciente = data;
-            pacienteMpi.aggregate([{
-                $group: {
-                    '_id': {
-                        'estado': '$estado'
-                    },
-                    'count': {
-                        '$sum': 1
-                    }
-                }
-            }],
-                function (err1, data1) {
-                    if (err1) {
-                        return next(err1);
-                    }
+      }],
+        function(err1, data1) {
+          if (err1) {
+            return next(err1);
+          }
 
-                    result.pacienteMpi = data1;
-                    log.aggregate([{
-                        $group: {
-                            '_id': {
-                                'operacion': '$operacion',
-                                'modulo': '$modulo'
-                            },
-                            'count': {
-                                '$sum': 1
-                            }
-                        }
-                    },
-                    {
-                        $match: {
-                            '_id.modulo': 'mpi'
-                        }
-                    }
-                    ],
-                        function (err2, data2) {
-                            if (err2) {
-                                return next(err2);
-                            }
-                            result.logs = data2;
-                            res.json(result);
-                        });
-                }
-            );
+          result.pacienteMpi = data1;
+          log.aggregate([{
+            $group: {
+              '_id': {
+                'operacion': '$operacion',
+                'modulo': '$modulo'
+              },
+              'count': {
+                '$sum': 1
+              }
+            }
+          },
+          {
+            $match: {
+              '_id.modulo': 'mpi'
+            }
+          }
+          ],
+            function(err2, data2) {
+              if (err2) {
+                return next(err2);
+              }
+              result.logs = data2;
+              res.json(result);
+            });
         }
-    );
+      );
+    }
+  );
 
 });
 
@@ -342,23 +342,23 @@ router.get('/pacientes/dashboard/', function (req, res, next) {
  */
 
 // Simple mongodb query by ObjectId --> better performance
-router.get('/pacientes/:id', function (req, res, next) {
-    // busca en pacienteAndes y en pacienteMpi
-    if (!Auth.check(req, 'mpi:paciente:getbyId')) {
-        return next(403);
+router.get('/pacientes/:id', function(req, res, next) {
+  // busca en pacienteAndes y en pacienteMpi
+  // if (!Auth.check(req, 'mpi:paciente:getbyId')) {
+  //     return next(403);
+  // }
+  buscarPaciente(req.params.id).then((resultado: any) => {
+    if (resultado) {
+      Logger.log(req, 'mpi', 'query', {
+        mongoDB: resultado.paciente
+      });
+      res.json(resultado.paciente);
+    } else {
+      return next(500);
     }
-    buscarPaciente(req.params.id).then((resultado: any) => {
-        if (resultado) {
-            Logger.log(req, 'mpi', 'query', {
-                mongoDB: resultado.paciente
-            });
-            res.json(resultado.paciente);
-        } else {
-            return next(500);
-        }
-    }).catch((err) => {
-        return next(err);
-    });
+  }).catch((err) => {
+    return next(err);
+  });
 
 });
 
@@ -426,173 +426,173 @@ router.get('/pacientes/:id', function (req, res, next) {
  *
  */
 // Search using elastic search
-router.get('/pacientes', function (req, res, next) {
-    if (!Auth.check(req, 'mpi:paciente:elasticSearch')) {
-        return next(403);
-    }
-    let connElastic = new Client({
-        host: configPrivate.hosts.elastic_main,
-    });
+router.get('/pacientes', function(req, res, next) {
+  // if (!Auth.check(req, 'mpi:paciente:elasticSearch')) {
+  //     return next(403);
+  // }
+  let connElastic = new Client({
+    host: configPrivate.hosts.elastic_main,
+  });
 
-    let query;
-    switch (req.query.type) {
-        case 'simplequery':
-            {
-                query = {
-                    simple_query_string: {
-                        query: '\"' + req.query.documento + '\" + \"' + req.query.apellido + '\" + \"' + req.query.nombre + '\" +' + req.query.sexo,
-                        fields: ['documento', 'apellido', 'nombre', 'sexo'],
-                        default_operator: 'and'
-                    }
-                };
+  let query;
+  switch (req.query.type) {
+    case 'simplequery':
+      {
+        query = {
+          simple_query_string: {
+            query: '\"' + req.query.documento + '\" + \"' + req.query.apellido + '\" + \"' + req.query.nombre + '\" +' + req.query.sexo,
+            fields: ['documento', 'apellido', 'nombre', 'sexo'],
+            default_operator: 'and'
+          }
+        };
+      }
+      break;
+    case 'multimatch':
+      {
+        query = {
+          multi_match: {
+            query: req.query.cadenaInput,
+            type: 'cross_fields',
+            fields: ['documento^5', 'nombre', 'apellido^3'],
+          }
+        };
+      }
+      break;
+    case 'suggest':
+      {
+        // let condicion = {};
+
+        // Sugiere pacientes que tengan la misma clave de blocking
+        let campo = req.query.claveBlocking;
+        let condicionMatch = {};
+        condicionMatch[campo] = {
+          query: req.query.documento,
+          minimum_should_match: 3,
+          fuzziness: 2
+        };
+        query = {
+          match: condicionMatch
+        };
+      }
+      break;
+  };
+  // Configuramos la cantidad de resultados que quiero que se devuelva y la query correspondiente
+  let body = {
+    size: 100,
+    from: 0,
+    query: query
+  };
+
+  // Logger de la consulta a ejecutar
+  Logger.log(req, 'mpi', 'query', {
+    elasticSearch: query
+  });
+
+  if (req.query.type === 'suggest') {
+
+    connElastic.search({
+      index: 'andes',
+      body: body
+    })
+      .then((searchResult) => {
+
+        // Asigno los valores para el suggest
+        let weights = config.mpi.weightsDefault;
+
+        if (req.query.escaneado) {
+          weights = config.mpi.weightsScan;
+        }
+
+        let porcentajeMatchMax = config.mpi.cotaMatchMax;
+        let porcentajeMatchMin = config.mpi.cotaMatchMin;
+        let listaPacientesMax = [];
+        let listaPacientesMin = [];
+        // let devolverPorcentaje = req.query.percentage;
+
+        ((searchResult.hits || {}).hits || []) // extract results from elastic response
+          .filter(function(hit) {
+            let paciente = hit._source;
+            let pacDto = {
+              documento: req.query.documento ? req.query.documento.toString() : '',
+              nombre: req.query.nombre ? req.query.nombre : '',
+              apellido: req.query.apellido ? req.query.apellido : '',
+              fechaNacimiento: req.query.fechaNacimiento ? moment(new Date(req.query.fechaNacimiento)).format('YYYY-MM-DD') : '',
+              sexo: req.query.sexo ? req.query.sexo : ''
+            };
+            let pacElastic = {
+              documento: paciente.documento ? paciente.documento.toString() : '',
+              nombre: paciente.nombre ? paciente.nombre : '',
+              apellido: paciente.apellido ? paciente.apellido : '',
+              fechaNacimiento: paciente.fechaNacimiento ? moment(paciente.fechaNacimiento).format('YYYY-MM-DD') : '',
+              sexo: paciente.sexo ? paciente.sexo : ''
+            };
+            let match = new Matching();
+            let valorMatching = match.matchPersonas(pacElastic, pacDto, weights, 'Levenshtein');
+            paciente['id'] = hit._id;
+
+            if (valorMatching >= porcentajeMatchMax) {
+              listaPacientesMax.push({
+                id: hit._id,
+                paciente: paciente,
+                match: valorMatching
+              });
+            } else {
+              if (valorMatching >= porcentajeMatchMin && valorMatching < porcentajeMatchMax) {
+                listaPacientesMin.push({
+                  id: hit._id,
+                  paciente: paciente,
+                  match: valorMatching
+                });
+              }
             }
-            break;
-        case 'multimatch':
-            {
-                query = {
-                    multi_match: {
-                        query: req.query.cadenaInput,
-                        type: 'cross_fields',
-                        fields: ['documento^5', 'nombre', 'apellido^3'],
-                    }
-                };
-            }
-            break;
-        case 'suggest':
-            {
-                // let condicion = {};
+            // console.log("SEARCHRESULT-------------",paciente.documento,paciente.apellido,valorMatching);
+          });
 
-                // Sugiere pacientes que tengan la misma clave de blocking
-                let campo = req.query.claveBlocking;
-                let condicionMatch = {};
-                condicionMatch[campo] = {
-                    query: req.query.documento,
-                    minimum_should_match: 3,
-                    fuzziness: 2
-                };
-                query = {
-                    match: condicionMatch
-                };
-            }
-            break;
-    };
-    // Configuramos la cantidad de resultados que quiero que se devuelva y la query correspondiente
-    let body = {
-        size: 100,
-        from: 0,
-        query: query
-    };
+        // if (devolverPorcentaje) {
+        let sortMatching = function(a, b) {
+          return b.match - a.match;
+        };
 
-    // Logger de la consulta a ejecutar
-    Logger.log(req, 'mpi', 'query', {
-        elasticSearch: query
-    });
-
-    if (req.query.type === 'suggest') {
-
-        connElastic.search({
-            index: 'andes',
-            body: body
-        })
-            .then((searchResult) => {
-
-                // Asigno los valores para el suggest
-                let weights = config.mpi.weightsDefault;
-
-                if (req.query.escaneado) {
-                    weights = config.mpi.weightsScan;
-                }
-
-                let porcentajeMatchMax = config.mpi.cotaMatchMax;
-                let porcentajeMatchMin = config.mpi.cotaMatchMin;
-                let listaPacientesMax = [];
-                let listaPacientesMin = [];
-                // let devolverPorcentaje = req.query.percentage;
-
-                ((searchResult.hits || {}).hits || []) // extract results from elastic response
-                    .filter(function (hit) {
-                        let paciente = hit._source;
-                        let pacDto = {
-                            documento: req.query.documento ? req.query.documento.toString() : '',
-                            nombre: req.query.nombre ? req.query.nombre : '',
-                            apellido: req.query.apellido ? req.query.apellido : '',
-                            fechaNacimiento: req.query.fechaNacimiento ? moment(new Date(req.query.fechaNacimiento)).format('YYYY-MM-DD') : '',
-                            sexo: req.query.sexo ? req.query.sexo : ''
-                        };
-                        let pacElastic = {
-                            documento: paciente.documento ? paciente.documento.toString() : '',
-                            nombre: paciente.nombre ? paciente.nombre : '',
-                            apellido: paciente.apellido ? paciente.apellido : '',
-                            fechaNacimiento: paciente.fechaNacimiento ? moment(paciente.fechaNacimiento).format('YYYY-MM-DD') : '',
-                            sexo: paciente.sexo ? paciente.sexo : ''
-                        };
-                        let match = new Matching();
-                        let valorMatching = match.matchPersonas(pacElastic, pacDto, weights, 'Levenshtein');
-                        paciente['id'] = hit._id;
-
-                        if (valorMatching >= porcentajeMatchMax) {
-                            listaPacientesMax.push({
-                                id: hit._id,
-                                paciente: paciente,
-                                match: valorMatching
-                            });
-                        } else {
-                            if (valorMatching >= porcentajeMatchMin && valorMatching < porcentajeMatchMax) {
-                                listaPacientesMin.push({
-                                    id: hit._id,
-                                    paciente: paciente,
-                                    match: valorMatching
-                                });
-                            }
-                        }
-                        // console.log("SEARCHRESULT-------------",paciente.documento,paciente.apellido,valorMatching);
-                    });
-
-                // if (devolverPorcentaje) {
-                let sortMatching = function (a, b) {
-                    return b.match - a.match;
-                };
-
-                // cambiamos la condición para lograr que nos devuelva más de una sugerencia
-                // ya que la 1ra sugerencia es el mismo paciente.
-                // if (listaPacientesMax.length > 0) {
-                if (listaPacientesMax.length > 0) {
-                    listaPacientesMax.sort(sortMatching);
-                    res.send(listaPacientesMax);
-                } else {
-                    listaPacientesMin.sort(sortMatching);
-                    res.send(listaPacientesMin);
-                }
-                // } else {
-                //     results = results.map((hit) => {
-                //         let elem = hit._source;
-                //         elem['id'] = hit._id;
-                //         return elem;
-                //     });
-                //     res.send(results);
-                // }
-            })
-            .catch((error) => {
-                next(error);
-            });
-    } else { // Es para los casos de multimatch y singlequery
-        connElastic.search({
-            index: 'andes',
-            body: body
-        })
-            .then((searchResult) => {
-                let results: Array<any> = ((searchResult.hits || {}).hits || []) // extract results from elastic response
-                    .map((hit) => {
-                        let elem = hit._source;
-                        elem['id'] = hit._id;
-                        return elem;
-                    });
-                res.send(results);
-            })
-            .catch((error) => {
-                next(error);
-            });
-    }
+        // cambiamos la condición para lograr que nos devuelva más de una sugerencia
+        // ya que la 1ra sugerencia es el mismo paciente.
+        // if (listaPacientesMax.length > 0) {
+        if (listaPacientesMax.length > 0) {
+          listaPacientesMax.sort(sortMatching);
+          res.send(listaPacientesMax);
+        } else {
+          listaPacientesMin.sort(sortMatching);
+          res.send(listaPacientesMin);
+        }
+        // } else {
+        //     results = results.map((hit) => {
+        //         let elem = hit._source;
+        //         elem['id'] = hit._id;
+        //         return elem;
+        //     });
+        //     res.send(results);
+        // }
+      })
+      .catch((error) => {
+        next(error);
+      });
+  } else { // Es para los casos de multimatch y singlequery
+    connElastic.search({
+      index: 'andes',
+      body: body
+    })
+      .then((searchResult) => {
+        let results: Array<any> = ((searchResult.hits || {}).hits || []) // extract results from elastic response
+          .map((hit) => {
+            let elem = hit._source;
+            elem['id'] = hit._id;
+            return elem;
+          });
+        res.send(results);
+      })
+      .catch((error) => {
+        next(error);
+      });
+  }
 });
 
 /**
@@ -622,183 +622,183 @@ router.get('/pacientes', function (req, res, next) {
  *       409:
  *         description: Un código de error con un array de mensajes de error
  */
-router.post('/pacientes/mpi', function (req, res, next) {
-    if (!Auth.check(req, 'mpi:paciente:postMpi')) {
-        return next(403);
+router.post('/pacientes/mpi', function(req, res, next) {
+  // if (!Auth.check(req, 'mpi:paciente:postMpi')) {
+  //     return next(403);
+  // }
+
+  let match = new Matching();
+  let newPatientMpi = new pacienteMpi(req.body);
+  let connElastic = new Client({
+    host: configPrivate.hosts.elastic_main,
+  });
+  // Se genera la clave de blocking
+  let claves = match.crearClavesBlocking(newPatientMpi);
+  newPatientMpi['claveBlocking'] = claves;
+
+  Auth.audit(newPatientMpi, req);
+
+  newPatientMpi.save((err) => {
+    if (err) {
+      console.log('Error al insertar un paciente en MPI: ', err);
+      return next(err);
     }
-
-    let match = new Matching();
-    let newPatientMpi = new pacienteMpi(req.body);
-    let connElastic = new Client({
-        host: configPrivate.hosts.elastic_main,
+    let nuevoPac = JSON.parse(JSON.stringify(newPatientMpi));
+    delete nuevoPac._id;
+    connElastic.create({
+      index: 'andes',
+      type: 'paciente',
+      id: newPatientMpi._id.toString(),
+      body: nuevoPac
+    }, function(error, response) {
+      if (error) {
+        next(error);
+      }
+      Logger.log(req, 'mpi', 'elasticInsert', {
+        nuevo: nuevoPac,
+      });
+      res.json(newPatientMpi);
     });
-    // Se genera la clave de blocking
-    let claves = match.crearClavesBlocking(newPatientMpi);
-    newPatientMpi['claveBlocking'] = claves;
-
-    Auth.audit(newPatientMpi, req);
-
-    newPatientMpi.save((err) => {
-        if (err) {
-            console.log('Error al insertar un paciente en MPI: ', err);
-            return next(err);
-        }
-        let nuevoPac = JSON.parse(JSON.stringify(newPatientMpi));
-        delete nuevoPac._id;
-        connElastic.create({
-            index: 'andes',
-            type: 'paciente',
-            id: newPatientMpi._id.toString(),
-            body: nuevoPac
-        }, function (error, response) {
-            if (error) {
-                next(error);
-            }
-            Logger.log(req, 'mpi', 'elasticInsert', {
-                nuevo: nuevoPac,
-            });
-            res.json(newPatientMpi);
-        });
-    });
+  });
 });
 
-router.put('/pacientes/mpi/:id', function (req, res, next) {
-    if (!Auth.check(req, 'mpi:paciente:putMpi')) {
-        return next(403);
+router.put('/pacientes/mpi/:id', function(req, res, next) {
+  // if (!Auth.check(req, 'mpi:paciente:putMpi')) {
+  //     return next(403);
+  // }
+  let ObjectId = mongoose.Types.ObjectId;
+  let objectId = new ObjectId(req.params.id);
+  let query = {
+    _id: objectId
+  };
+  let connElastic = new Client({
+    host: configPrivate.hosts.elastic_main,
+  });
+  let match = new Matching();
+
+  pacienteMpi.findById(query, function(err, patientFound: any) {
+    if (err) {
+      return next(404);
     }
-    let ObjectId = mongoose.Types.ObjectId;
-    let objectId = new ObjectId(req.params.id);
-    let query = {
-        _id: objectId
-    };
-    let connElastic = new Client({
-        host: configPrivate.hosts.elastic_main,
-    });
-    let match = new Matching();
 
-    pacienteMpi.findById(query, function (err, patientFound: any) {
-        if (err) {
-            return next(404);
+    let pacienteOriginal = null;
+    if (patientFound) {
+      // Guarda los valores originales para el logger
+      pacienteOriginal = patientFound.toObject();
+
+      /*Update de paciente de todos los campos salvo que esté validado*/
+      // if (patientFound.estado !== 'validado') {
+      patientFound.documento = req.body.documento;
+      patientFound.estado = req.body.estado;
+      patientFound.activo = req.body.activo;
+      patientFound.nombre = req.body.nombre.toUpperCase();
+      patientFound.apellido = req.body.apellido.toUpperCase();
+      patientFound.sexo = req.body.sexo;
+      patientFound.fechaNacimiento = req.body.fechaNacimiento;
+      /*Si es distinto de validado debo generar una nueva clave de blocking */
+      let claves = match.crearClavesBlocking(patientFound);
+      patientFound.claveBlocking = claves;
+      // } else {
+      //     patientFound.nombre = req.body.nombre.toUpperCase();
+      //     patientFound.apellido = req.body.apellido.toUpperCase();
+      // }
+      patientFound.genero = req.body.genero;
+      patientFound.alias = req.body.alias;
+      patientFound.estadoCivil = req.body.estadoCivil;
+      patientFound.entidadesValidadoras = req.body.entidadesValidadoras;
+      patientFound.financiador = req.body.financiador;
+      patientFound.relaciones = req.body.relaciones;
+      patientFound.direccion = req.body.direccion;
+      patientFound.contacto = req.body.contacto;
+      patientFound.identificadores = req.body.identificadores;
+      patientFound.scan = req.body.scan;
+      patientFound.reportarError = req.body.reportarError;
+      Auth.audit(patientFound, req);
+      patientFound.save(function(err2) {
+        if (err2) {
+          return next(err2);
         }
 
-        let pacienteOriginal = null;
-        if (patientFound) {
-            // Guarda los valores originales para el logger
-            pacienteOriginal = patientFound.toObject();
+        let pacAct = JSON.parse(JSON.stringify(patientFound));
+        delete pacAct._id;
 
-            /*Update de paciente de todos los campos salvo que esté validado*/
-            // if (patientFound.estado !== 'validado') {
-            patientFound.documento = req.body.documento;
-            patientFound.estado = req.body.estado;
-            patientFound.activo = req.body.activo;
-            patientFound.nombre = req.body.nombre.toUpperCase();
-            patientFound.apellido = req.body.apellido.toUpperCase();
-            patientFound.sexo = req.body.sexo;
-            patientFound.fechaNacimiento = req.body.fechaNacimiento;
-            /*Si es distinto de validado debo generar una nueva clave de blocking */
-            let claves = match.crearClavesBlocking(patientFound);
-            patientFound.claveBlocking = claves;
-            // } else {
-            //     patientFound.nombre = req.body.nombre.toUpperCase();
-            //     patientFound.apellido = req.body.apellido.toUpperCase();
-            // }
-            patientFound.genero = req.body.genero;
-            patientFound.alias = req.body.alias;
-            patientFound.estadoCivil = req.body.estadoCivil;
-            patientFound.entidadesValidadoras = req.body.entidadesValidadoras;
-            patientFound.financiador = req.body.financiador;
-            patientFound.relaciones = req.body.relaciones;
-            patientFound.direccion = req.body.direccion;
-            patientFound.contacto = req.body.contacto;
-            patientFound.identificadores = req.body.identificadores;
-            patientFound.scan = req.body.scan;
-            patientFound.reportarError = req.body.reportarError;
-            Auth.audit(patientFound, req);
-            patientFound.save(function (err2) {
-                if (err2) {
-                    return next(err2);
-                }
-
-                let pacAct = JSON.parse(JSON.stringify(patientFound));
-                delete pacAct._id;
-
-                connElastic.search({
-                    q: patientFound._id.toString()
-                }).then(function (body) {
-                    let hits = body.hits.hits;
-                    if (hits.length > 0) {
-                        connElastic.update({
-                            index: 'andes',
-                            type: 'paciente',
-                            id: patientFound._id.toString(),
-                            body: {
-                                doc: pacAct
-                            }
-                        }, function (error, response) {
-                            if (error) {
-                                console.log('Error al actualizar elastic en PUT:       ', error);
-                                // Logger.log(req, 'pacientes', 'elasticError', error);
-                            }
-                            Logger.log(req, 'mpi', 'elasticUpdate', {
-                                original: pacienteOriginal,
-                                nuevo: patientFound
-                            });
-                            res.json(patientFound);
-                        });
-                    } else {
-                        connElastic.create({
-                            index: 'andes',
-                            type: 'paciente',
-                            id: patientFound._id.toString(),
-                            body: pacAct
-                        }, function (error, response) {
-                            if (error) {
-                                console.log('Error al actualizar elastic en PUT NEW:            ', error);
-                                // Logger.log(req, 'pacientes', 'elasticError', error);
-                            }
-                            Logger.log(req, 'mpi', 'elasticInsert', patientFound);
-                            res.json(patientFound);
-                        });
-                    }
-                }, function (error) {
-                    return next(error);
-                });
+        connElastic.search({
+          q: patientFound._id.toString()
+        }).then(function(body) {
+          let hits = body.hits.hits;
+          if (hits.length > 0) {
+            connElastic.update({
+              index: 'andes',
+              type: 'paciente',
+              id: patientFound._id.toString(),
+              body: {
+                doc: pacAct
+              }
+            }, function(error, response) {
+              if (error) {
+                console.log('Error al actualizar elastic en PUT:       ', error);
+                // Logger.log(req, 'pacientes', 'elasticError', error);
+              }
+              Logger.log(req, 'mpi', 'elasticUpdate', {
+                original: pacienteOriginal,
+                nuevo: patientFound
+              });
+              res.json(patientFound);
             });
-        } else {
-            let newPatient = new pacienteMpi(req.body);
-            let claves = match.crearClavesBlocking(newPatient);
-            newPatient['claveBlocking'] = claves;
-            newPatient['apellido'] = newPatient['apellido'].toUpperCase();
-            newPatient['nombre'] = newPatient['nombre'].toUpperCase();
-
-            Auth.audit(newPatient, req);
-            newPatient.save((err2) => {
-                if (err2) {
-                    console.log('Error al persistir los datos: ', err2);
-                    return next(err2);
-                }
-                let nuevoPac = JSON.parse(JSON.stringify(newPatient));
-                delete nuevoPac._id;
-
-
-                connElastic.create({
-                    index: 'andes',
-                    type: 'paciente',
-                    id: newPatient._id.toString(),
-                    body: nuevoPac
-                }, function (error, response) {
-                    if (error) {
-                        console.log('Error en elastic al hacer un insert desde el PUT:          ', error);
-                        // Logger.log(req, 'pacientes', 'elasticError', error);
-                    }
-                    Logger.log(req, 'mpi', 'elasticInsertInPut', newPatient);
-                    res.json(newPatient);
-                });
+          } else {
+            connElastic.create({
+              index: 'andes',
+              type: 'paciente',
+              id: patientFound._id.toString(),
+              body: pacAct
+            }, function(error, response) {
+              if (error) {
+                console.log('Error al actualizar elastic en PUT NEW:            ', error);
+                // Logger.log(req, 'pacientes', 'elasticError', error);
+              }
+              Logger.log(req, 'mpi', 'elasticInsert', patientFound);
+              res.json(patientFound);
             });
+          }
+        }, function(error) {
+          return next(error);
+        });
+      });
+    } else {
+      let newPatient = new pacienteMpi(req.body);
+      let claves = match.crearClavesBlocking(newPatient);
+      newPatient['claveBlocking'] = claves;
+      newPatient['apellido'] = newPatient['apellido'].toUpperCase();
+      newPatient['nombre'] = newPatient['nombre'].toUpperCase();
+
+      Auth.audit(newPatient, req);
+      newPatient.save((err2) => {
+        if (err2) {
+          console.log('Error al persistir los datos: ', err2);
+          return next(err2);
         }
+        let nuevoPac = JSON.parse(JSON.stringify(newPatient));
+        delete nuevoPac._id;
 
 
-    });
+        connElastic.create({
+          index: 'andes',
+          type: 'paciente',
+          id: newPatient._id.toString(),
+          body: nuevoPac
+        }, function(error, response) {
+          if (error) {
+            console.log('Error en elastic al hacer un insert desde el PUT:          ', error);
+            // Logger.log(req, 'pacientes', 'elasticError', error);
+          }
+          Logger.log(req, 'mpi', 'elasticInsertInPut', newPatient);
+          res.json(newPatient);
+        });
+      });
+    }
+
+
+  });
 });
 
 /**
@@ -826,38 +826,38 @@ router.put('/pacientes/mpi/:id', function (req, res, next) {
  *         schema:
  *           $ref: '#/definitions/paciente'
  */
-router.delete('/pacientes/mpi/:id', function (req, res, next) {
-    if (!Auth.check(req, 'mpi:paciente:deleteMpi')) {
-        return next(403);
+router.delete('/pacientes/mpi/:id', function(req, res, next) {
+  // if (!Auth.check(req, 'mpi:paciente:deleteMpi')) {
+  //     return next(403);
+  // }
+
+  let connElastic = new Client({
+    host: configPrivate.hosts.elastic_main,
+  });
+
+  let ObjectId = (require('mongoose').Types.ObjectId);
+  let objectId = new ObjectId(req.params.id);
+  let query = {
+    _id: objectId
+  };
+  pacienteMpi.findById(query, function(err, patientFound) {
+    if (err) {
+      return next(err);
     }
-
-    let connElastic = new Client({
-        host: configPrivate.hosts.elastic_main,
+    patientFound.remove();
+    connElastic.delete({
+      index: 'andes',
+      type: 'paciente',
+      id: patientFound._id.toString(),
+    }, function(error, response) {
+      if (error) {
+        console.log('Error en el borrado del indice de elastic en mpi:  ', error);
+        // Logger.log(req, 'pacientes', 'elasticError', error);
+      }
+      // Logger.log(req, 'pacientes', 'elasticDelete', patientFound);
+      res.json(patientFound);
     });
-
-    let ObjectId = (require('mongoose').Types.ObjectId);
-    let objectId = new ObjectId(req.params.id);
-    let query = {
-        _id: objectId
-    };
-    pacienteMpi.findById(query, function (err, patientFound) {
-        if (err) {
-            return next(err);
-        }
-        patientFound.remove();
-        connElastic.delete({
-            index: 'andes',
-            type: 'paciente',
-            id: patientFound._id.toString(),
-        }, function (error, response) {
-            if (error) {
-                console.log('Error en el borrado del indice de elastic en mpi:  ', error);
-                // Logger.log(req, 'pacientes', 'elasticError', error);
-            }
-            // Logger.log(req, 'pacientes', 'elasticDelete', patientFound);
-            res.json(patientFound);
-        });
-    });
+  });
 });
 
 /**
@@ -887,47 +887,47 @@ router.delete('/pacientes/mpi/:id', function (req, res, next) {
  *       409:
  *         description: Un código de error con un array de mensajes de error
  */
-router.post('/pacientes', function (req, res, next) {
-    if (!Auth.check(req, 'mpi:paciente:postAndes')) {
-        return next(403);
+router.post('/pacientes', function(req, res, next) {
+  // if (!Auth.check(req, 'mpi:paciente:postAndes')) {
+  //     return next(403);
+  // }
+  let match = new Matching();
+  let newPatient = new paciente(req.body);
+  let connElastic = new Client({
+    host: configPrivate.hosts.elastic_main,
+  });
+
+  // Se genera la clave de blocking
+  let claves = match.crearClavesBlocking(newPatient);
+  newPatient['claveBlocking'] = claves;
+  newPatient['apellido'] = newPatient['apellido'].toUpperCase();
+  newPatient['nombre'] = newPatient['nombre'].toUpperCase();
+  // Habilitamos el paciente como activo cuando es nuevo
+  newPatient['activo'] = true;
+
+  Auth.audit(newPatient, req);
+  newPatient.save((err) => {
+    if (err) {
+      console.log('Error al persistir los datos: ', err);
+      return next(err);
     }
-    let match = new Matching();
-    let newPatient = new paciente(req.body);
-    let connElastic = new Client({
-        host: configPrivate.hosts.elastic_main,
+    //  console.log("NEW PATIENT:   ", newPatient['fechaNacimiento']);
+    let nuevoPac = JSON.parse(JSON.stringify(newPatient));
+    delete nuevoPac._id;
+    delete nuevoPac.relaciones;
+    connElastic.create({
+      index: 'andes',
+      type: 'paciente',
+      id: newPatient._id.toString(),
+      body: nuevoPac
+    }, function(error, response) {
+      if (error) {
+        console.log(error);
+      }
+      Logger.log(req, 'mpi', 'insert', newPatient);
+      res.json(newPatient);
     });
-
-    // Se genera la clave de blocking
-    let claves = match.crearClavesBlocking(newPatient);
-    newPatient['claveBlocking'] = claves;
-    newPatient['apellido'] = newPatient['apellido'].toUpperCase();
-    newPatient['nombre'] = newPatient['nombre'].toUpperCase();
-    // Habilitamos el paciente como activo cuando es nuevo
-    newPatient['activo'] = true;
-
-    Auth.audit(newPatient, req);
-    newPatient.save((err) => {
-        if (err) {
-            console.log('Error al persistir los datos: ', err);
-            return next(err);
-        }
-        //  console.log("NEW PATIENT:   ", newPatient['fechaNacimiento']);
-        let nuevoPac = JSON.parse(JSON.stringify(newPatient));
-        delete nuevoPac._id;
-        delete nuevoPac.relaciones;
-        connElastic.create({
-            index: 'andes',
-            type: 'paciente',
-            id: newPatient._id.toString(),
-            body: nuevoPac
-        }, function (error, response) {
-            if (error) {
-                console.log(error);
-            }
-            Logger.log(req, 'mpi', 'insert', newPatient);
-            res.json(newPatient);
-        });
-    });
+  });
 });
 /**
  * @swagger
@@ -961,186 +961,186 @@ router.post('/pacientes', function (req, res, next) {
  */
 
 
-router.put('/pacientes/:id', function (req, res, next) {
-    if (!Auth.check(req, 'mpi:paciente:putAndes')) {
-        return next(403);
+router.put('/pacientes/:id', function(req, res, next) {
+  // if (!Auth.check(req, 'mpi:paciente:putAndes')) {
+  //     return next(403);
+  // }
+  let ObjectId = mongoose.Types.ObjectId;
+  let objectId = new ObjectId(req.params.id);
+  let query = {
+    _id: objectId
+  };
+  let connElastic = new Client({
+    host: configPrivate.hosts.elastic_main,
+  });
+  let match = new Matching();
+
+  paciente.findById(query, function(err, patientFound: any) {
+    if (err) {
+      return next(404);
     }
-    let ObjectId = mongoose.Types.ObjectId;
-    let objectId = new ObjectId(req.params.id);
-    let query = {
-        _id: objectId
-    };
-    let connElastic = new Client({
-        host: configPrivate.hosts.elastic_main,
-    });
-    let match = new Matching();
+    //  console.log("REQ BODY ---------------------- ",req.body);
+    let pacienteOriginal = null;
+    if (patientFound) {
 
-    paciente.findById(query, function (err, patientFound: any) {
-        if (err) {
-            return next(404);
-        }
-        //  console.log("REQ BODY ---------------------- ",req.body);
-        let pacienteOriginal = null;
-        if (patientFound) {
+      // Guarda los valores originales para el logger
+      pacienteOriginal = patientFound.toObject();
 
-            // Guarda los valores originales para el logger
-            pacienteOriginal = patientFound.toObject();
+      /*Update de paciente de todos los campos salvo que esté validado o halla sido escaneado*/
+      if (patientFound.estado !== 'validado' || patientFound.isScan) {
+        patientFound.documento = req.body.documento;
+        patientFound.estado = req.body.estado;
+        patientFound.nombre = req.body.nombre;
+        patientFound.apellido = req.body.apellido;
+        patientFound.sexo = req.body.sexo;
 
-            /*Update de paciente de todos los campos salvo que esté validado o halla sido escaneado*/
-            if (patientFound.estado !== 'validado' || patientFound.isScan) {
-                patientFound.documento = req.body.documento;
-                patientFound.estado = req.body.estado;
-                patientFound.nombre = req.body.nombre;
-                patientFound.apellido = req.body.apellido;
-                patientFound.sexo = req.body.sexo;
+        patientFound.fechaNacimiento = req.body.fechaNacimiento;
+        /*Si es distinto de validado debo generar una nueva clave de blocking */
+        let claves = match.crearClavesBlocking(patientFound);
+        patientFound.claveBlocking = claves;
+      } else {
+        patientFound.nombre = req.body.nombre.toUpperCase();
+        patientFound.apellido = req.body.apellido.toUpperCase();
+      }
 
-                patientFound.fechaNacimiento = req.body.fechaNacimiento;
-                /*Si es distinto de validado debo generar una nueva clave de blocking */
-                let claves = match.crearClavesBlocking(patientFound);
-                patientFound.claveBlocking = claves;
-            } else {
-                patientFound.nombre = req.body.nombre.toUpperCase();
-                patientFound.apellido = req.body.apellido.toUpperCase();
-            }
-
-            patientFound.genero = req.body.genero;
-            patientFound.alias = req.body.alias;
-            patientFound.activo = req.body.activo;
-            patientFound.estadoCivil = req.body.estadoCivil;
-            patientFound.entidadesValidadoras = req.body.entidadesValidadoras;
-            patientFound.financiador = req.body.financiador;
-            patientFound.relaciones = req.body.relaciones;
-            patientFound.direccion = req.body.direccion;
-            patientFound.contacto = req.body.contacto;
-            patientFound.identificadores = req.body.identificadores;
-            patientFound.scan = req.body.scan;
-            patientFound.reportarError = req.body.reportarError;
-            patientFound.notas = req.body.notas;
-            // Habilita auditoria y guarda
-            Auth.audit(patientFound, req);
-            patientFound.save(function (err2) {
-                if (err2) {
-                    console.log('Error Save', err2);
-                    return next(err2);
-                }
-
-                let pacAct = JSON.parse(JSON.stringify(patientFound));
-                delete pacAct._id;
-                delete pacAct.relaciones;
-                connElastic.search({
-                    q: '_id:' + patientFound.id.toString()
-                }).then(function (body) {
-
-                    let hits = body.hits.hits;
-                    if (hits.length > 0) {
-                        connElastic.update({
-                            index: 'andes',
-                            type: 'paciente',
-                            id: patientFound._id.toString(),
-                            body: {
-                                doc: pacAct
-                            }
-                        }, function (error, response) {
-                            if (error) {
-                                console.log('Error de actualiazción Elastic', error);
-                            }
-                            Logger.log(req, 'mpi', 'update', {
-                                original: pacienteOriginal,
-                                nuevo: patientFound
-                            });
-                            res.json(patientFound);
-                        });
-                    } else {
-                        connElastic.create({
-                            index: 'andes',
-                            type: 'paciente',
-                            id: patientFound._id.toString(),
-                            body: {
-                                doc: pacAct
-                            }
-                        }, function (error, response) {
-                            if (error) {
-                                console.log('Error creación en Elastic', error);
-                            }
-                            Logger.log(req, 'mpi', 'update', {
-                                original: pacienteOriginal,
-                                nuevo: patientFound
-                            });
-                            res.json(patientFound);
-                        });
-                    }
-                });
-            });
-        } else {
-            req.body._id = req.body.id;
-            let newPatient = new paciente(req.body);
-
-            // console.log("NEW PATIENT---------------",newPatient);
-            let claves = match.crearClavesBlocking(newPatient);
-            newPatient['claveBlocking'] = claves;
-            newPatient['apellido'] = newPatient['apellido'].toUpperCase();
-            newPatient['nombre'] = newPatient['nombre'].toUpperCase();
-            /*Antes del save se podría realizar una búsqueda y matching para evitar cargar repetidos, actualmente este proceso sólo se realiza del lado de la app*/
-            Auth.audit(newPatient, req);
-            newPatient.save((err2) => {
-                if (err2) {
-                    return next(err2);
-                }
-
-                let nuevoPac = JSON.parse(JSON.stringify(newPatient));
-                delete nuevoPac._id;
-                delete nuevoPac.relaciones;
-
-                connElastic.search({
-                    q: '_id:' + newPatient._id.toString()
-                }).then(function (body) {
-                    let hits = body.hits.hits;
-                    if (hits.length > 0) {
-                        // console.log('hay q actualizar el docmento en elastic');
-                        connElastic.update({
-                            index: 'andes',
-                            type: 'paciente',
-                            id: newPatient._id.toString(),
-                            body: {
-                                doc: nuevoPac
-                            }
-                        }, function (error, response) {
-                            if (error) {
-                                console.log('Error update Elastic', error);
-                            }
-                            Logger.log(req, 'mpi', 'update', {
-                                original: pacienteOriginal,
-                                nuevo: newPatient
-                            });
-                            res.json(newPatient);
-                        });
-                    } else {
-                        connElastic.create({
-                            index: 'andes',
-                            type: 'paciente',
-                            id: newPatient._id.toString(),
-                            body: nuevoPac
-                        }, function (error, response) {
-                            console.log('Error create Elastic', response);
-                            if (error) {
-                                // console.log(error);
-                                Logger.log(req, 'mpi', 'insert', {
-                                    error: error,
-                                    data: newPatient
-                                });
-                            }
-                            Logger.log(req, 'mpi', 'insert', newPatient);
-                            res.json(newPatient);
-                        });
-                    }
-                }, function (error) {
-                    // console.log(error.message);
-                });
-            });
+      patientFound.genero = req.body.genero;
+      patientFound.alias = req.body.alias;
+      patientFound.activo = req.body.activo;
+      patientFound.estadoCivil = req.body.estadoCivil;
+      patientFound.entidadesValidadoras = req.body.entidadesValidadoras;
+      patientFound.financiador = req.body.financiador;
+      patientFound.relaciones = req.body.relaciones;
+      patientFound.direccion = req.body.direccion;
+      patientFound.contacto = req.body.contacto;
+      patientFound.identificadores = req.body.identificadores;
+      patientFound.scan = req.body.scan;
+      patientFound.reportarError = req.body.reportarError;
+      patientFound.notas = req.body.notas;
+      // Habilita auditoria y guarda
+      Auth.audit(patientFound, req);
+      patientFound.save(function(err2) {
+        if (err2) {
+          console.log('Error Save', err2);
+          return next(err2);
         }
 
+        let pacAct = JSON.parse(JSON.stringify(patientFound));
+        delete pacAct._id;
+        delete pacAct.relaciones;
+        connElastic.search({
+          q: '_id:' + patientFound.id.toString()
+        }).then(function(body) {
 
-    });
+          let hits = body.hits.hits;
+          if (hits.length > 0) {
+            connElastic.update({
+              index: 'andes',
+              type: 'paciente',
+              id: patientFound._id.toString(),
+              body: {
+                doc: pacAct
+              }
+            }, function(error, response) {
+              if (error) {
+                console.log('Error de actualiazción Elastic', error);
+              }
+              Logger.log(req, 'mpi', 'update', {
+                original: pacienteOriginal,
+                nuevo: patientFound
+              });
+              res.json(patientFound);
+            });
+          } else {
+            connElastic.create({
+              index: 'andes',
+              type: 'paciente',
+              id: patientFound._id.toString(),
+              body: {
+                doc: pacAct
+              }
+            }, function(error, response) {
+              if (error) {
+                console.log('Error creación en Elastic', error);
+              }
+              Logger.log(req, 'mpi', 'update', {
+                original: pacienteOriginal,
+                nuevo: patientFound
+              });
+              res.json(patientFound);
+            });
+          }
+        });
+      });
+    } else {
+      req.body._id = req.body.id;
+      let newPatient = new paciente(req.body);
+
+      // console.log("NEW PATIENT---------------",newPatient);
+      let claves = match.crearClavesBlocking(newPatient);
+      newPatient['claveBlocking'] = claves;
+      newPatient['apellido'] = newPatient['apellido'].toUpperCase();
+      newPatient['nombre'] = newPatient['nombre'].toUpperCase();
+      /*Antes del save se podría realizar una búsqueda y matching para evitar cargar repetidos, actualmente este proceso sólo se realiza del lado de la app*/
+      Auth.audit(newPatient, req);
+      newPatient.save((err2) => {
+        if (err2) {
+          return next(err2);
+        }
+
+        let nuevoPac = JSON.parse(JSON.stringify(newPatient));
+        delete nuevoPac._id;
+        delete nuevoPac.relaciones;
+
+        connElastic.search({
+          q: '_id:' + newPatient._id.toString()
+        }).then(function(body) {
+          let hits = body.hits.hits;
+          if (hits.length > 0) {
+            // console.log('hay q actualizar el docmento en elastic');
+            connElastic.update({
+              index: 'andes',
+              type: 'paciente',
+              id: newPatient._id.toString(),
+              body: {
+                doc: nuevoPac
+              }
+            }, function(error, response) {
+              if (error) {
+                console.log('Error update Elastic', error);
+              }
+              Logger.log(req, 'mpi', 'update', {
+                original: pacienteOriginal,
+                nuevo: newPatient
+              });
+              res.json(newPatient);
+            });
+          } else {
+            connElastic.create({
+              index: 'andes',
+              type: 'paciente',
+              id: newPatient._id.toString(),
+              body: nuevoPac
+            }, function(error, response) {
+              console.log('Error create Elastic', response);
+              if (error) {
+                // console.log(error);
+                Logger.log(req, 'mpi', 'insert', {
+                  error: error,
+                  data: newPatient
+                });
+              }
+              Logger.log(req, 'mpi', 'insert', newPatient);
+              res.json(newPatient);
+            });
+          }
+        }, function(error) {
+          // console.log(error.message);
+        });
+      });
+    }
+
+
+  });
 });
 
 /**
@@ -1168,72 +1168,72 @@ router.put('/pacientes/:id', function (req, res, next) {
  *         schema:
  *           $ref: '#/definitions/paciente'
  */
-router.delete('/pacientes/:id', function (req, res, next) {
-    if (!Auth.check(req, 'mpi:paciente:deleteAndes')) {
-        return next(403);
+router.delete('/pacientes/:id', function(req, res, next) {
+  // if (!Auth.check(req, 'mpi:paciente:deleteAndes')) {
+  //     return next(403);
+  // }
+
+  let ObjectId = mongoose.Types.ObjectId;
+  let connElastic = new Client({
+    host: configPrivate.hosts.elastic_main,
+  });
+  let objectId = new ObjectId(req.params.id);
+  let query = {
+    _id: objectId
+  };
+  paciente.findById(query, function(err, patientFound) {
+    if (err) {
+      console.log('No encontro el paciente a borrar:   ', err);
+      return next(err);
     }
+    Auth.audit(patientFound, req);
+    patientFound.remove();
+    connElastic.delete({
+      index: 'andes',
+      type: 'paciente',
+      refresh: true,
+      id: patientFound._id.toString(),
+    }, function(error, response) {
+      if (error) {
+        console.log('Error en elastic Search delete: ', error);
+      }
 
-    let ObjectId = mongoose.Types.ObjectId;
-    let connElastic = new Client({
-        host: configPrivate.hosts.elastic_main,
+      // Logger.log(req, 'pacientes', 'delete', patientFound);
+      res.json(patientFound);
     });
-    let objectId = new ObjectId(req.params.id);
-    let query = {
-        _id: objectId
-    };
-    paciente.findById(query, function (err, patientFound) {
-        if (err) {
-            console.log('No encontro el paciente a borrar:   ', err);
-            return next(err);
-        }
-        Auth.audit(patientFound, req);
-        patientFound.remove();
-        connElastic.delete({
-            index: 'andes',
-            type: 'paciente',
-            refresh: true,
-            id: patientFound._id.toString(),
-        }, function (error, response) {
-            if (error) {
-                console.log('Error en elastic Search delete: ', error);
-            }
-
-            // Logger.log(req, 'pacientes', 'delete', patientFound);
-            res.json(patientFound);
-        });
 
 
-    });
+  });
 });
 
 
 function buscarPaciente(id) {
-    return new Promise((resolve, reject) => {
-        paciente.findById(id, function (err, data) {
-            if (err) {
-                reject(err);
-            } else {
-                if (data) {
-                    let resultado = {
-                        db: 'andes',
-                        paciente: data
-                    };
-                    resolve(resultado);
-                } else {
-                    pacienteMpi.findById(id, function (err2, dataMpi) {
-                        if (err2) {
-                            reject(err2);
-                        }
-                        let resultado = {
-                            db: 'mpi',
-                            paciente: dataMpi
-                        };
-                        resolve(resultado);
-                    });
-                }
+  return new Promise((resolve, reject) => {
+    paciente.findById(id, function(err, data) {
+      if (err) {
+        reject(err);
+      } else {
+        if (data) {
+          let resultado = {
+            db: 'andes',
+            paciente: data
+          };
+          resolve(resultado);
+        } else {
+          pacienteMpi.findById(id, function(err2, dataMpi) {
+            if (err2) {
+              reject(err2);
             }
-        });
+            let resultado = {
+              db: 'mpi',
+              paciente: dataMpi
+            };
+            resolve(resultado);
+          });
+        }
+      }
     });
+  });
 }
 
 /**
@@ -1264,131 +1264,131 @@ function buscarPaciente(id) {
 
 /* Funciones  de operaciones PATCH */
 function updateContactos(req, data) {
-    data.markModified('contacto');
-    Logger.log(req, 'mpi', 'update', {
-        accion: 'updateContacto',
-        ruta: req.url,
-        method: req.method,
-        data: data.contacto,
-    });
-    data.contacto = req.body.contacto;
-    // Logger de la consulta a ejecutar
+  data.markModified('contacto');
+  Logger.log(req, 'mpi', 'update', {
+    accion: 'updateContacto',
+    ruta: req.url,
+    method: req.method,
+    data: data.contacto,
+  });
+  data.contacto = req.body.contacto;
+  // Logger de la consulta a ejecutar
 }
 
 function updateRelaciones(req, data) {
-    data.markModified('relaciones');
-    data.relaciones = req.body.relaciones;
+  data.markModified('relaciones');
+  data.relaciones = req.body.relaciones;
 }
 
 function updateDireccion(req, data) {
-    data.markModified('direccion');
-    data.direccion = req.body.direccion;
+  data.markModified('direccion');
+  data.direccion = req.body.direccion;
 }
 
 function updateCarpetaEfectores(req, data) {
-    data.markModified('carpetaEfectores');
-    data.carpetaEfectores = req.body.carpetaEfectores;
+  data.markModified('carpetaEfectores');
+  data.carpetaEfectores = req.body.carpetaEfectores;
 }
 
 function linkIdentificadores(req, data) {
-    data.markModified('identificadores');
-    if (data.identificadores) {
-        data.identificadores.push(req.body.dto);
-    } else {
-        data.identificadores = [req.body.dto]; // Primer elemento del array
-    }
+  data.markModified('identificadores');
+  if (data.identificadores) {
+    data.identificadores.push(req.body.dto);
+  } else {
+    data.identificadores = [req.body.dto]; // Primer elemento del array
+  }
 }
 
 function unlinkIdentificadores(req, data) {
-    data.markModified('identificadores');
-    if (data.identificadores) {
-        data.identificadores = data.identificadores.filter(x => x.valor !== req.body.dto);
-    }
+  data.markModified('identificadores');
+  if (data.identificadores) {
+    data.identificadores = data.identificadores.filter(x => x.valor !== req.body.dto);
+  }
 }
 
 function updateActivo(req, data) {
-    data.markModified('activo');
-    data.activo = req.body.dto;
+  data.markModified('activo');
+  data.activo = req.body.dto;
 }
 
 function updateRelacion(req, data) {
-    if (data && data.relaciones) {
-        let objRel = data.relaciones.find(elem => {
-            if (elem && req.body.dto && elem.referencia && req.body.dto.referencia) {
-                if (elem.referencia.toString() === req.body.dto.referencia.toString()) {
-                    return elem;
-                }
-            }
-        });
-
-        if (!objRel) {
-            data.markModified('relaciones');
-            data.relaciones.push(req.body.dto);
+  if (data && data.relaciones) {
+    let objRel = data.relaciones.find(elem => {
+      if (elem && req.body.dto && elem.referencia && req.body.dto.referencia) {
+        if (elem.referencia.toString() === req.body.dto.referencia.toString()) {
+          return elem;
         }
+      }
+    });
+
+    if (!objRel) {
+      data.markModified('relaciones');
+      data.relaciones.push(req.body.dto);
     }
+  }
 }
 
 function deleteRelacion(req, data) {
-    if (data && data.relaciones) {
-        data.relaciones.find(function (value, index, array) {
-            if (value && value.referencia && req.body.dto && req.body.dto.referencia) {
-                if (value.referencia.toString() === req.body.dto.referencia.toString()) {
-                    array.splice(index, 1);
-                }
-            }
-        });
-    }
+  if (data && data.relaciones) {
+    data.relaciones.find(function(value, index, array) {
+      if (value && value.referencia && req.body.dto && req.body.dto.referencia) {
+        if (value.referencia.toString() === req.body.dto.referencia.toString()) {
+          array.splice(index, 1);
+        }
+      }
+    });
+  }
 }
 
-router.patch('/pacientes/:id', function (req, res, next) {
-    if (!Auth.check(req, 'mpi:paciente:patchAndes')) {
-        return next(403);
-    }
-    buscarPaciente(req.params.id).then((resultado: any) => {
-        if (resultado) {
-            switch (req.body.op) {
-                case 'updateContactos':
-                    updateContactos(req, resultado.paciente);
-                    break;
-                case 'updateRelaciones':
-                    updateRelaciones(req, resultado.paciente);
-                    break;
-                case 'updateDireccion':
-                    updateDireccion(req, resultado.paciente);
-                    break;
-                case 'updateCarpetaEfectores':
-                    updateCarpetaEfectores(req, resultado.paciente);
-                    break;
-                case 'linkIdentificadores':
-                    linkIdentificadores(req, resultado.paciente);
-                    break;
-                case 'unlinkIdentificadores':
-                    unlinkIdentificadores(req, resultado.paciente);
-                    break;
-                case 'updateActivo':
-                    updateActivo(req, resultado.paciente);
-                    break;
-                case 'updateRelacion':
-                    // console.log("RESULTADO BUSQUEDApACIENTE--------", resultado);
-                    updateRelacion(req, resultado.paciente);
-                    break;
-                case 'deleteRelacion':
-                    // console.log("RESULTADO BUSQUEDApACIENTE--------", resultado);
-                    deleteRelacion(req, resultado.paciente);
-                    break;
-            }
-            Auth.audit(resultado.paciente, req);
-            resultado.paciente.save(function (errPatch) {
-                if (errPatch) {
-                    console.log('ERROR:', errPatch);
-                    return next(errPatch);
-                }
-                return res.json(resultado.paciente);
-            });
+router.patch('/pacientes/:id', function(req, res, next) {
+  // if (!Auth.check(req, 'mpi:paciente:patchAndes')) {
+  //     return next(403);
+  // }
+  buscarPaciente(req.params.id).then((resultado: any) => {
+    if (resultado) {
+      switch (req.body.op) {
+        case 'updateContactos':
+          updateContactos(req, resultado.paciente);
+          break;
+        case 'updateRelaciones':
+          updateRelaciones(req, resultado.paciente);
+          break;
+        case 'updateDireccion':
+          updateDireccion(req, resultado.paciente);
+          break;
+        case 'updateCarpetaEfectores':
+          updateCarpetaEfectores(req, resultado.paciente);
+          break;
+        case 'linkIdentificadores':
+          linkIdentificadores(req, resultado.paciente);
+          break;
+        case 'unlinkIdentificadores':
+          unlinkIdentificadores(req, resultado.paciente);
+          break;
+        case 'updateActivo':
+          updateActivo(req, resultado.paciente);
+          break;
+        case 'updateRelacion':
+          // console.log("RESULTADO BUSQUEDApACIENTE--------", resultado);
+          updateRelacion(req, resultado.paciente);
+          break;
+        case 'deleteRelacion':
+          // console.log("RESULTADO BUSQUEDApACIENTE--------", resultado);
+          deleteRelacion(req, resultado.paciente);
+          break;
+      }
+      Auth.audit(resultado.paciente, req);
+      resultado.paciente.save(function(errPatch) {
+        if (errPatch) {
+          console.log('ERROR:', errPatch);
+          return next(errPatch);
         }
-    }).catch((err) => {
-        return next(err);
-    });
+        return res.json(resultado.paciente);
+      });
+    }
+  }).catch((err) => {
+    return next(err);
+  });
 });
 
 // Comentado hasta incorporar esta funcionalidad
