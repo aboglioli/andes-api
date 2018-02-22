@@ -6,16 +6,12 @@ services:
     ports:
       - "27017:27017"
 
-  mongodb2:
-    image: mongo
-    ports:
-      - "27028:27028"
-
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:5.6.3
     environment:
       - cluster.name=docker-cluster
       - bootstrap.memory_lock=true
+      - xpack.security.enabled=false
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ulimits:
       memlock:

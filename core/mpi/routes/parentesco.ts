@@ -58,30 +58,30 @@ let router = express.Router();
  *         schema:
  *           $ref: '#/definitions/parentesco'
  */
-router.get('/parentescos/:id*?', function (req, res, next) {
- if (!Auth.check(req, 'mpi:parentesco:get')) {
-        return next(403);
-    }
-    if (req.params.id) {
-        parentesco.modelParentesco.findById(req.params.id, function (err, data) {
-            if (err) {
-                next(err);
-            };
+router.get('/parentescos/:id*?', function(req, res, next) {
+  // if (!Auth.check(req, 'mpi:parentesco:get')) {
+  //        return next(403);
+  //    }
+  if (req.params.id) {
+    parentesco.modelParentesco.findById(req.params.id, function(err, data) {
+      if (err) {
+        next(err);
+      };
 
-            res.json(data);
-        });
-    } else {
-        let query;
+      res.json(data);
+    });
+  } else {
+    let query;
 
-        query = parentesco.modelParentesco.find({});
-        if (req.query.nombre) {
-            query.where('nombre').equals(RegExp('^.*' + req.query.nombre + '.*$', 'i'));
-        }
-        query.sort({ 'nombre': 1 }).exec((err, data) => {
-            if (err) { return next(err); }
-            res.json(data);
-        });
+    query = parentesco.modelParentesco.find({});
+    if (req.query.nombre) {
+      query.where('nombre').equals(RegExp('^.*' + req.query.nombre + '.*$', 'i'));
     }
+    query.sort({ 'nombre': 1 }).exec((err, data) => {
+      if (err) { return next(err); }
+      res.json(data);
+    });
+  }
 });
 
 export = router;
