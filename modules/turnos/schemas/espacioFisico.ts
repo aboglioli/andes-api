@@ -20,22 +20,3 @@ export let espacioFisicoSchema = new mongoose.Schema({
 });
 
 export let espacioFisico = mongoose.model('espacioFisico', espacioFisicoSchema, 'espacioFisico');
-
-espacioFisico.create({
-    nombre: 'Espacio físico 1',
-    organizacion: {
-        _id: "5ab899144c224b7d3e44a59c",
-        nombre: 'Organización 1'
-    },
-    edificio: {
-        nombre: 'Edificio 1'
-    },
-    sector: {
-        nombre: 'Sector A'
-    },
-    servicio: {
-        nombre: 'Servicio'
-    },
-    activo: true,
-    estado: 'disponible'
-})
