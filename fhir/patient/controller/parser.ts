@@ -11,7 +11,7 @@ import {
 import {
     PacienteFHIR
 } from '../../interfaces/IPacienteFHIR';
-
+import * as controller from '../../../core/mpi/controller/paciente';
 import * as localidad from '../../../core/tm/schemas/localidad';
 
 
@@ -22,10 +22,11 @@ export function pacientesAFHIR(ids: any[]) {
 
         ids.forEach(function (id) {
             promises.push(
-                pacienteMpi.findById(id)
+                controller.buscarPaciente(id)
                     .then((data: any) => {
                         if (data) {
                             let identificadores = data.documento ? [{ assigner: 'DU', value: data.documento }] : [];
+                            identificadores.push({assigner: 'andes', value: id });
                             // Parsea contactos
                             let contactos = data.contacto ? data.contacto.map(unContacto => {
                                 let cont = {
@@ -50,11 +51,11 @@ export function pacientesAFHIR(ids: any[]) {
                             let direcciones = data.direccion ? data.direccion.map(unaDireccion => {
                                 let direc = {
                                     resourceType: 'Address',
-                                    postalCode: unaDireccion.codigoPostal,
+                                    postalCode: unaDireccion.codigoPostal ? unaDireccion.codigoPostal : '',
                                     line: [unaDireccion.valor],
-                                    city: unaDireccion.ubicacion.localidad.nombre,
-                                    state: unaDireccion.ubicacion.provincia.nombre,
-                                    country: unaDireccion.ubicacion.pais.nombre,
+                                    city: unaDireccion.ubicacion.localidad ? unaDireccion.ubicacion.localidad.nombre : '',
+                                    state: unaDireccion.ubicacion.provincia ? unaDireccion.ubicacion.provincia.nombre : '',
+                                    country: unaDireccion.ubicacion.pais ? unaDireccion.ubicacion.pais.nombre : '',
                                 };
                                 return direc;
                             }) : [];
@@ -211,7 +212,7 @@ export function FHIRAPaciente(pacienteFhir: PacienteFHIR) {
         let pacienteMPI = {
             documento: pacienteFhir.identifier[0].value,
             nombre: pacienteFhir.name[0].given.join().replace(',', ' '),
-            apellido: pacienteFhir.name[0].family,
+            apellido: pacienteFhir.name[0].family.join().replace(',', ' '),
             fechaNacimiento: pacienteFhir.birthDate,
             genero: genero,
             sexo: sexo,

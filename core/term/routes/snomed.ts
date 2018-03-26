@@ -1,5 +1,5 @@
 import * as express from 'express';
-import { model } from '../schemas/snomed';
+import { textIndexModel } from '../schemas/snomed';
 import * as utils from '../../../utils/utils';
 import * as cie10 from '../schemas/cie10';
 import { SnomedCIE10Mapping } from './../controller/mapping';
@@ -45,15 +45,14 @@ let router = express.Router();
  *         default: 0
  */
 router.get('/snomed', function (req, res, next) {
-    if (!req.query.search && !req.query.refsetId) {
+    if (!req.query.search && !req.query.refsetId && req.query.search !== '') {
         return next('Debe ingresar un parámetro de búsqueda');
     }
     let conditions = {
-        lang: 'spanish',
+        languageCode: 'spanish',
         conceptActive: true,
         active: true
     };
-
     // Filtramos por semanticTag
     if (req.query.semanticTag) {
         conditions['$or'] = [...[], req.query.semanticTag].map((i) => { return { semanticTag: i }; });
@@ -61,6 +60,7 @@ router.get('/snomed', function (req, res, next) {
 
     // creamos un array de palabras a partir de la separacion del espacio
     if (req.query.search) {
+        req.query.search = req.query.search.toLowerCase();
         if (isNaN(req.query.search)) {
             // Busca por palabras
             conditions['$and'] = [];
@@ -82,9 +82,8 @@ router.get('/snomed', function (req, res, next) {
             conditions['refsetIds'] = req.query.refsetId;
         }
     }
-
     // preparamos query
-    let query = model.find(conditions, {
+    let query = textIndexModel.find(conditions, {
         conceptId: 1,
         term: 1,
         fsn: 1,
@@ -114,7 +113,7 @@ router.get('/snomed', function (req, res, next) {
             });
         }
         let skip: number = parseInt(req.query.skip || 0, 10);
-        res.json(data.slice(skip, req.query.limit || 100));
+        res.json(data.slice(skip, req.query.limit || 500));
     });
 });
 

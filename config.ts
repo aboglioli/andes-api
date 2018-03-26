@@ -83,7 +83,8 @@ export const modules = {
     turnos_mobile_auth: {
         active: true,
         path: './modules/mobileApp/auth_routes',
-        route: '/modules/mobileApp'
+        route: '/modules/mobileApp',
+        middleware: null
     },
     turnos_mobile: {
         active: true,
@@ -107,8 +108,32 @@ export const modules = {
         active: true,
         path: './fhir/patient/routes',
         route: '/fhir/patient',
-        middleware: appMiddleware,
-    }
+        middleware: appMiddleware
+    },
+    cda: {
+        active: true,
+        path: './modules/cda/routes',
+        route: '/modules/cda',
+        middleware: appMiddleware
+    },
+    descargas: {
+        active: true,
+        path: './modules/descargas/routes',
+        route: '/modules/descargas',
+        middleware: appMiddleware
+    },
+    obraSocial: {
+        active: true,
+        path: './modules/obraSocial/routes',
+        route: '/modules/obraSocial',
+        middleware: appMiddleware
+    },
+    prestamosCarpetas: {
+        active: true,
+        path: './modules/prestamosCarpetas/routes',
+        route: '/modules/prestamosCarpetas',
+        middleware: appMiddleware
+    },
 };
 
 // Cotas de consumo de APIs
@@ -145,5 +170,11 @@ export const mpi = {
         name: 0.3,
         gender: 0.1,
         birthDate: 0.3
+    },
+    weightsFaAnses: {
+        identity: 0.1,
+        name: 0.45,
+        gender: 0.3,
+        birthDate: 0.15
     }
 };
