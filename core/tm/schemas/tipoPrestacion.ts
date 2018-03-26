@@ -11,9 +11,8 @@ export let tipoPrestacionSchema = new mongoose.Schema({
 });
 
 /* Se definen los campos virtuals */
-tipoPrestacionSchema.virtual('nombre').get(function () {
+tipoPrestacionSchema.virtual('nombre').get(function() {
     return this.term;
 });
 
 export let tipoPrestacion = mongoose.model('tipoPrestacion', tipoPrestacionSchema, 'conceptoTurneable');
-

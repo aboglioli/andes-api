@@ -12,6 +12,8 @@ initAPI(app);
 let port = 3002;
 let server = app.listen(3002, () => debug('andes')('listening on port %s', port));
 
+console.log('Iniciando');
+
 // Inicializa Websockets
 Websockets.initialize(server);
 

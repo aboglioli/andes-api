@@ -37,9 +37,32 @@ export let profesionalSchema = new mongoose.Schema({
 });
 
 // Defino Virtuals
-profesionalSchema.virtual('nombreCompleto').get(function () {
+profesionalSchema.virtual('nombreCompleto').get(function() {
     // Prefiere el error de undefined cuando se hace una consulta de proyección y no se incluyen algunos campos
     return ((this.nombre || '') + ' ' + (this.apellido || '')).trim();
 });
 
 export let profesional = mongoose.model('profesional', profesionalSchema, 'profesional');
+
+// profesional.create({
+//     documento: '55555',
+//     nombre: 'Profesional 2',
+//     apellido: 'Profesional 2',
+//     sexo: 'masculino',
+//     genero: 'masculino',
+//     fechaNacimiento: new Date(),
+//     estadoCivil: 'casado',
+//     rol: 'Jefe en todo',
+//     especialidades: {
+//         nombre: 'Especialidad 2',
+//         codigo: {
+//             sisa: '123'
+//         }
+//     },
+//     matriculas: [{
+//         numero: 3341235,
+//         activo: true
+//     }],
+//     legajo: '38505',
+//     codigoSisa: '123'
+// })

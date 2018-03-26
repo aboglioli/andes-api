@@ -41,6 +41,39 @@ export function createPaciente(data, req) {
     });
 }
 
+// createPaciente({
+//     identificadores: [{
+//         entidad: 'DNI',
+//         valor: '123456'
+//     }],
+//     documento: '123456',
+//     cuil: '20-123456-4',
+//     activo: true,
+//     estado: 'validado',
+//     nombre: 'Nombre',
+//     apellido: 'Apellido',
+//     contacto: [{
+//         tipo: 'celular',
+//         valor: '261112233'
+//     }],
+//     direccion: [{
+//         valor: 'Dirección 1',
+//         codigoPostal: '5527',
+//         ubicacion: {
+//             provincia: {
+//                 nombre: 'Mendoza'
+//             },
+//             pais: {
+//                 nombre: 'Argentina'
+//             }
+//         }
+//     }],
+//     sexo: 'masculino',
+//     genero: 'masculino',
+//     fechaNacimiento: new Date(),
+//     estadoCivil: 'casado'
+// }).then(pat => console.log('new pat', pat));
+
 
 export function updatePaciente(pacienteObj, data, req) {
     return new Promise((resolve, reject) => {
@@ -53,7 +86,7 @@ export function updatePaciente(pacienteObj, data, req) {
             // pacienteObj.markModified;
             Auth.audit(pacienteObj, req);
         }
-        pacienteObj.save(function (err2) {
+        pacienteObj.save(function(err2) {
             if (err2) {
                 return reject(err2);
             }
@@ -114,7 +147,7 @@ export function updatePacienteMpi(pacMpi, pacAndes, req) {
             pacMpi.esPacienteMpi = true;
             Auth.audit(pacMpi, req);
         }
-        pacMpi.save(function (err2) {
+        pacMpi.save(function(err2) {
             if (err2) {
                 return reject(err2);
             }
@@ -186,7 +219,7 @@ export function postPacienteMpi(newPatientMpi, req) {
  */
 export function buscarPaciente(id): Promise<{ db: String, paciente: any }> {
     return new Promise((resolve, reject) => {
-        paciente.findById(id, function (err, data) {
+        paciente.findById(id, function(err, data) {
             if (err) {
                 reject(err);
             } else {
@@ -197,7 +230,7 @@ export function buscarPaciente(id): Promise<{ db: String, paciente: any }> {
                     };
                     resolve(resultado);
                 } else {
-                    pacienteMpi.findById(id, function (err2, dataMpi) {
+                    pacienteMpi.findById(id, function(err2, dataMpi) {
                         if (err2) {
                             reject(err2);
                         } else if (dataMpi) {
@@ -223,7 +256,7 @@ export function buscarPaciente(id): Promise<{ db: String, paciente: any }> {
 
 export function buscarPacienteWithcondition(condition): Promise<{ db: String, paciente: any }> {
     return new Promise((resolve, reject) => {
-        pacienteMpi.findOne(condition, function (err, data) {
+        pacienteMpi.findOne(condition, function(err, data) {
             if (err) {
                 reject(err);
             } else {
@@ -234,7 +267,7 @@ export function buscarPacienteWithcondition(condition): Promise<{ db: String, pa
                     };
                     resolve(resultado);
                 } else {
-                    paciente.findOne(condition, function (err2, dataMpi) {
+                    paciente.findOne(condition, function(err2, dataMpi) {
                         if (err2) {
                             reject(err2);
                         } else if (dataMpi) {
@@ -260,7 +293,9 @@ export function buscarPacienteWithcondition(condition): Promise<{ db: String, pa
  */
 export function matching(data) {
 
+    console.log('connecting elastic search');
     let connElastic = new ElasticSync();
+    console.log('connected elastic search');
 
     let query;
     switch (data.type) {
@@ -329,7 +364,7 @@ export function matching(data) {
                     let listaPacientesMin = [];
 
                     ((searchResult.hits || {}).hits || [])
-                        .filter(function (hit) {
+                        .filter(function(hit) {
                             let paciente2 = hit._source;
                             let pacDto = {
                                 documento: data.documento ? data.documento.toString() : '',
@@ -367,7 +402,7 @@ export function matching(data) {
                         });
 
                     // if (devolverPorcentaje) {
-                    let sortMatching = function (a, b) {
+                    let sortMatching = function(a, b) {
                         return b.match - a.match;
                     };
 
@@ -415,7 +450,7 @@ export function deletePacienteAndes(objectId) {
         let query = {
             _id: objectId
         };
-        paciente.findById(query, function (err, patientFound) {
+        paciente.findById(query, function(err, patientFound) {
             if (err) {
                 reject(err);
             }
@@ -493,7 +528,7 @@ export function updateRelacion(req, data) {
 
 export function deleteRelacion(req, data) {
     if (data && data.relaciones) {
-        data.relaciones.find(function (value, index, array) {
+        data.relaciones.find(function(value, index, array) {
             if (value && value.referencia && req.body.dto && req.body.dto.referencia) {
                 if (value.referencia.toString() === req.body.dto.referencia.toString()) {
                     array.splice(index, 1);
@@ -554,7 +589,7 @@ export function searchSimilar(objective, where: string, conditions, _weights = n
                     });
                 }
 
-                let sortMatching = function (a, b) {
+                let sortMatching = function(a, b) {
                     return b.value - a.value;
                 };
 
@@ -625,7 +660,7 @@ export async function matchPaciente(dataPaciente) {
 
         }
 
-        let sortMatching = function (a, b) {
+        let sortMatching = function(a, b) {
             return b.value - a.value;
         };
 

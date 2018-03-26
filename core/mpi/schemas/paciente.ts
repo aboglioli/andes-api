@@ -77,7 +77,7 @@ export let pacienteSchema = new mongoose.Schema({
     }]
 }, { versionKey: false });
 
-pacienteSchema.pre('save', function (next) {
+pacienteSchema.pre('save', function(next) {
 
     if (this.isModified('nombre')) {
         this.nombre = this.nombre.toUpperCase();
@@ -94,10 +94,10 @@ pacienteSchema.pre('save', function (next) {
 });
 
 /* Se definen los campos virtuals */
-pacienteSchema.virtual('nombreCompleto').get(function () {
+pacienteSchema.virtual('nombreCompleto').get(function() {
     return this.nombre + ' ' + this.apellido;
 });
-pacienteSchema.virtual('edad').get(function () {
+pacienteSchema.virtual('edad').get(function() {
     let edad = null;
     if (this.fechaNacimiento) {
         let birthDate = new Date(this.fechaNacimiento);
@@ -111,7 +111,7 @@ pacienteSchema.virtual('edad').get(function () {
     }
     return edad;
 });
-pacienteSchema.virtual('edadReal').get(function () {
+pacienteSchema.virtual('edadReal').get(function() {
     // Calcula Edad de una persona (Redondea -- 30.5 años = 30 años)
     let edad: Object;
     let fechaNac: any;

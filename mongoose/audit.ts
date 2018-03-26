@@ -1,7 +1,7 @@
 import * as mongoose from 'mongoose';
 
 // Plugin para configurar auditoría
-module.exports = function (schema, options) {
+module.exports = function(schema, options) {
     schema.add({
         createdAt: Date,
         createdBy: mongoose.Schema.Types.Mixed,
@@ -10,11 +10,11 @@ module.exports = function (schema, options) {
     });
 
     // Define un método que debe llamarse en el documento principal antes de ejecutar .save()
-    schema.methods.audit = function (user) {
+    schema.methods.audit = function(user) {
         this.$audit = user;
     };
 
-    schema.pre('save', function (next) {
+    schema.pre('save', function(next) {
         let user = this.$audit;
         let o = this.ownerDocument && this.ownerDocument();
         while (o && !user) {

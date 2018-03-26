@@ -11,6 +11,7 @@ export class ElasticSync {
     constructor() {
         this.connElastic = new Client({
             host: configPrivate.hosts.elastic_main,
+            httpAuth: 'elastic:changeme' // default user and pass for elastic search docker container
         });
     }
 
@@ -67,7 +68,7 @@ export class ElasticSync {
                 type: this.TYPE,
                 id,
                 body: data
-            }, function (error, response) {
+            }, function(error, response) {
                 if (error) {
                     reject(error);
                 }
@@ -116,7 +117,7 @@ export class ElasticSync {
                 type: this.TYPE,
                 refresh: true,
                 id
-            }, function (error, response) {
+            }, function(error, response) {
                 if (error) {
                     reject(error);
                 }

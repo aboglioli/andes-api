@@ -1,11 +1,14 @@
 // Configuración de Passport
 export const auth = {
-    useLdap: false, // En nuestro caso está en true porque interoperamos con un ldap provincial
-    jwtKey: 'xxx',
-    ldapOU: 'ou=xxx,o=xxxx,o=neuquen',
+    useLdap: false,
+    jwtKey: 'API_KEY',
+    ldapOU: 'ou=People,o=integrabilidad,o=neuquen',
 };
 
-// Hosts
+// True: Expone una ruta de la api que lista todos los permisos disponibles
+export const enablePermisosDoc = false;
+
+// Puerto de LDAP
 export const ports = {
     ldapPort: ':389'
 };
@@ -15,47 +18,69 @@ export const hosts = {
     ldap: 'ldap.neuquen.gov.ar',
     elastic_main: 'localhost:9200',
     mongoDB_main: {
-        host: '127.0.0.1:27017/andes', // Instancia gral de la base
-        auth: undefined,
-        server: undefined
+        host: 'localhost:27017/andes',
+        auth: { authdb: 'admin' },
+        server: { reconnectTries: Number.MAX_VALUE }
     },
     mongoDB_mpi: {
-        host: '127.0.0.1:27028/andes', // Instancia del CORE de pacientes validados - Repositorio Central -
-        auth: undefined,
-        server: undefined
+        host: 'localhost:27017/mpi',
+        auth: { authdb: 'admin' },
+        server: { reconnectTries: Number.MAX_VALUE }
     },
     mongoDB_snomed: {
-        host: '127.0.0.1:27017/snomed',  //Instancia local de snomed
-        auth: undefined,
-        server: undefined
+        host: 'mongodb://localhost:27017/es-edition',
+        auth: { authdb: 'admin' },
+        server: { reconnectTries: Number.MAX_VALUE }
     }
 };
-
-// Constante de snomed para conexión
-export const snomed = {
-    dbName: 'snomed',
-    dbVersion: 'v20160131tx'  // Esta es la colección que estamos usando
-};
-
 // Mongoose config
 export let mongooseDebugMode = false;
 
 // Swagger config
-export let enableSwagger = false;
+export let enableSwagger = true;
 
-// email App Mobile
-export const enviarMail = {
-   host: 'xxx.hospitalneuquen.org.ar',
-   port: 25,
-   options: {
-       from: '"Salud :hospital:" <xxx@dominiohospital.org.ar>',
-   }
+// Configuración de Google Geocoding
+export const geoKey = 'GOOGLE_MAP_KEY';
+
+// Configuración servicio SISA
+export const sisa = {
+    username: '',
+    password: '',
+    host: 'sisa.msal.gov.ar',
+    port: 443,
+    url: 'https://sisa.msal.gov.ar/sisa/services/rest/cmdb/obtener?'
+};
+// Configuración servicio ANSES
+export const anses = {
+    Usuario: '',
+    password: '',
+    url: '',
+    serv: '',
+    serv2: ''
+};
+// Configuración servicio SINTYS
+export const sintys = {
+    username: '',
+    password: '',
+    host: '',
+    port: 443,
+    path: ''
 };
 
-// Configuración de la app Mobile
+// Auth App Mobile
+export const authApp = {
+    secret: ''
+};
+
+export const snomed = {
+    dbName: 'es-edition',
+    dbVersion: 'v20171200'
+};
+
+// Push Notifications
 export const pushNotificationsSettings = {
     gcm: {
-        id: 'unstring',
+        id: 'GCM_API_KEY',
         phonegap: true
     },
     apn: {
@@ -67,27 +92,92 @@ export const pushNotificationsSettings = {
     }
 };
 
-
-// Auth App Mobile
-export const authApp = {
-    secret: 'xxxx'
+// E-mail server settings
+export const enviarMail = {
+    host: '',
+    port: 587,
+    secure: false, // true for 465, false for other ports
+    auth: {
+        user: '', // generated ethereal user
+        pass: ''  // generated ethereal password
+    }
 };
 
-// Configuración de Google Geocoding
-export const geoKey = 'unaClaveGeoKey';
-
-
-// Usuarios y claves fuentes auténticas
-
-export const anses = {
-    username: 'usuarioAnses',
-    password: 'unaClaveAnses'
+// URLs descarga facmacias de turnos
+export const farmaciasEndpoints = {
+    localidades: 'http://181.231.9.13/cf/consultarturnos.aspx',
+    turnos: 'http://181.231.9.13/lawen/turnos.aspx'
 };
 
-
-// Configuración SISA
-export const sisa = {
-    username: 'usuarioSisa',
-    password: 'passwordSisa'
+// Endpoints envio de SMS
+export const SMSendpoints = {
+    urlOperador: '',
+    urlNumero: ''
 };
 
+export const jobs = [
+    {
+        when: '*/5 * * * * * ',
+        action: './jobs/roboSenderJob'
+    }
+];
+
+export const userScheduler = {
+    user: {
+        usuario: {
+            nombre: 'Ejemplo',
+            apellido: 'Scheduler'
+        },
+        organizacion: {
+            'nombre': 'Ejemplo'
+        }
+    },
+    ip: '0.0.0.0',
+    connection: {
+        localAddress: '0.0.0.0'
+    }
+};
+
+export const conSql = {
+    auth: {
+        user: '',
+        password: ''
+    },
+    serverSql: {
+        server: '',
+        database: ''
+    },
+    pool: {
+        acquireTimeoutMillis: 15000
+    }
+};
+
+export const conSqlHPN = {
+    auth: {
+        user: '',
+        password: ''
+    },
+    serverSql: {
+        server: '',
+        database: '',
+        port: ''
+    },
+    pool: {
+        acquireTimeoutMillis: 15000
+    }
+
+}
+
+export const CDA = {
+    rootOID: ''
+};
+
+export const wsSalud = {
+    host: '',
+    getPaciente: '',
+    getResultado: '',
+    hellerWS: '',
+    hellerFS: '',
+    hpnWS: '',
+    hostHPN: ''
+};

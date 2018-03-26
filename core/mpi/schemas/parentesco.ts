@@ -7,4 +7,3 @@ export let parentezcoSchema = new mongoose.Schema({
 });
 
 export let modelParentesco = mongoose.model('parentesco', parentezcoSchema, 'parentesco');
-

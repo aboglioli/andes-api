@@ -18,7 +18,7 @@ let router = express.Router();
  * @get /api/auth/sesion
  */
 
-router.get('/sesion', Auth.authenticate(), function (req, res) {
+router.get('/sesion', Auth.authenticate(), function(req, res) {
     res.json((req as any).user);
 });
 
@@ -86,7 +86,7 @@ router.post('/organizaciones', Auth.authenticate(), (req, res, next) => {
 });
 
 // Función interna que chequea si la cuenta mobile existe
-let checkMobile = function (profesionalId) {
+let checkMobile = function(profesionalId) {
     return new Promise((resolve, reject) => {
         authMobile.getAccountByProfesional(profesionalId).then((account) => {
             if (!account) {
@@ -114,9 +114,9 @@ let checkMobile = function (profesionalId) {
  * @post /api/auth/login
  */
 
-router.post('/login', function (req, res, next) {
+router.post('/login', function(req, res, next) {
     // Función interna que genera token
-    let login = function (nombre: string, apellido: string) {
+    let login = function(nombre: string, apellido: string) {
         Promise.all([
             // organizacion.model.findById(req.body.organizacion, {
             //     nombre: true
@@ -160,7 +160,7 @@ router.post('/login', function (req, res, next) {
         });
     };
 
-    let loginCache = function (password: string) {
+    let loginCache = function(password: string) {
         Promise.all([
             authUsers.findOne({
                 usuario: req.body.usuario,
@@ -220,7 +220,7 @@ router.post('/login', function (req, res, next) {
                 let ldap = ldapjs.createClient({
                     url: `ldap://${configPrivate.hosts.ldap}`
                 });
-                ldap.bind(dn, req.body.password, function (err) {
+                ldap.bind(dn, req.body.password, function(err) {
                     if (err) {
                         return next(ldapjs.InvalidCredentialsError ? 403 : err);
                     }
@@ -230,14 +230,14 @@ router.post('/login', function (req, res, next) {
                         filter: '(uid=' + req.body.usuario + ')',
                         paged: false,
                         sizeLimit: 1
-                    }, function (err2, searchResult) {
+                    }, function(err2, searchResult) {
                         if (err2) {
                             return next(err2);
                         }
-                        searchResult.on('searchEntry', function (entry) {
+                        searchResult.on('searchEntry', function(entry) {
                             login(entry.object.givenName, entry.object.sn);
                         });
-                        searchResult.on('error', function (err3) {
+                        searchResult.on('error', function(err3) {
                             return next(err3);
                         });
                     });
@@ -252,7 +252,7 @@ router.post('/login', function (req, res, next) {
  */
 
 router.post('/file-token', Auth.authenticate(), (req, res, next) => {
-    return res.json({token: Auth.generateFileToken()});
+    return res.json({ token: Auth.generateFileToken() });
 });
 
 export = router;
